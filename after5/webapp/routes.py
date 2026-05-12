@@ -2,9 +2,11 @@ from __future__ import annotations
 """All login-gated page routes."""
 from flask import Flask, render_template, request, redirect, url_for, flash
 
+import tempfile
 from pathlib import Path
 
-from .. import db, send
+from .. import contacts as contacts_mod
+from .. import db, seed, send
 from . import jobs
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent.parent / "templates"
@@ -190,6 +192,40 @@ def register(app: Flask, login_required) -> None:
             "company_detail.html",
             company=company, contacts=contacts_, sends=sends_, touches=touches_,
         )
+
+    @app.route("/upload", methods=["GET", "POST"])
+    @login_required
+    def upload_csv():
+        """AI-Ark-style intake: drop a curated CSV, get rows into the DB.
+
+        Companies CSV columns: domain, name, country, icp[, source]
+        People    CSV columns: domain, first_name, last_name, role[, email]
+        """
+        result = None
+        if request.method == "POST":
+            kind = request.form.get("kind", "companies")
+            upfile = request.files.get("file")
+            if not upfile or not upfile.filename:
+                flash("No file selected", "error")
+                return redirect(url_for("upload_csv"))
+            with tempfile.NamedTemporaryFile(
+                mode="wb", suffix=".csv", delete=False
+            ) as tmp:
+                upfile.save(tmp)
+                tmp_path = tmp.name
+            try:
+                if kind == "people":
+                    stats = contacts_mod.import_people_csv(tmp_path)
+                else:
+                    inserted, skipped = seed.import_csv(tmp_path)
+                    stats = {"inserted": inserted, "skipped": skipped}
+                result = {"kind": kind, "filename": upfile.filename, "stats": stats}
+                flash(f"Imported {stats.get('inserted', 0)} rows from {upfile.filename}", "ok")
+            except Exception as e:
+                flash(f"Import failed: {e}", "error")
+            finally:
+                Path(tmp_path).unlink(missing_ok=True)
+        return render_template("upload.html", result=result)
 
     @app.route("/automation")
     @login_required

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Import Leads{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Import Leads</h1>
+    <p class="lead">Drop a curated CSV from AI Ark (or any other source). The enrichment layer picks up new rows automatically on the next <code>enrich</code>.</p>
+  </div>
+</div>
+
+<div class="grid-main">
+  <div>
+    <div class="card">
+      <div class="card-head"><h2>Companies CSV</h2></div>
+      <p class="muted">Header row required. Columns:</p>
+      <pre>domain,name,country,icp[,source]</pre>
+      <p class="muted"><code>country</code> must be <code>UK</code>. <code>icp</code> is free-form but the qualifier prefers
+        the brief's labels: <code>real_estate</code>, <code>mortgage_broker</code>, <code>car_dealer</code>,
+        <code>solar_home_improvement</code>, <code>car_finance</code>, <code>recruitment_agency</code>, <code>gym_fitness</code>.
+      </p>
+      <form method="post" enctype="multipart/form-data" style="margin-top:18px">
+        <input type="hidden" name="kind" value="companies">
+        <input type="file" name="file" accept=".csv" required
+               style="display:block;width:100%;margin-bottom:12px;
+                      background:var(--bg);border:1px dashed var(--border-2);
+                      border-radius:8px;padding:14px;color:var(--fg)">
+        <button class="btn btn-primary" style="width:100%"><i data-lucide="upload"></i> Import companies</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>People CSV (optional)</h2></div>
+      <p class="muted">Use this when AI Ark / your source has named contacts attached. Companies must already exist.</p>
+      <pre>domain,first_name,last_name,role[,email]</pre>
+      <p class="muted">If <code>email</code> is blank we generate <code>first.last@domain</code> + MX-validate.</p>
+      <form method="post" enctype="multipart/form-data" style="margin-top:18px">
+        <input type="hidden" name="kind" value="people">
+        <input type="file" name="file" accept=".csv" required
+               style="display:block;width:100%;margin-bottom:12px;
+                      background:var(--bg);border:1px dashed var(--border-2);
+                      border-radius:8px;padding:14px;color:var(--fg)">
+        <button class="btn" style="width:100%"><i data-lucide="upload"></i> Import people</button>
+      </form>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-head"><h2>What happens next</h2></div>
+      <ol style="margin-left:20px;color:var(--muted);line-height:1.8">
+        <li>Rows go into <b>companies</b> table with <code>status='new'</code></li>
+        <li>Click <b>Run Pipeline</b> on the dashboard, or trigger <code>enrich</code> on Automation</li>
+        <li>Each company gets scored on 6 signals via live HTTP — this is the Apify equivalent</li>
+        <li><code>qualify</code> buckets them into hot / warm / cold</li>
+        <li><code>find-contacts</code> + <code>personalise</code> set them up for the sequence</li>
+      </ol>
+    </div>
+
+    {% if result %}
+    <div class="card" style="border-color:var(--success)">
+      <div class="card-head"><h2>Last import</h2></div>
+      <p><b>{{ result.filename }}</b> ({{ result.kind }})</p>
+      <pre>{{ result.stats | tojson(indent=2) }}</pre>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-head"><h2>Sample format</h2></div>
+      <p class="muted">If you don't have a curated list yet, this is the format:</p>
+      <pre>domain,name,country,icp
+foxtons.co.uk,Foxtons,UK,real_estate
+landc.co.uk,L&amp;C Mortgages,UK,mortgage_broker
+arnoldclark.com,Arnold Clark,UK,car_dealer</pre>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}

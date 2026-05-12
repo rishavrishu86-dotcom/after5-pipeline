@@ -22,11 +22,15 @@
     <p class="lead">Welcome back! Here's your sales pipeline overview.</p>
   </div>
   <div class="page-actions">
-    <button class="btn btn-primary"
+    <a class="btn btn-primary" href="{{ url_for('upload_csv') }}"
+       title="AI Ark style — drop a CSV of curated companies">
+      <i data-lucide="upload"></i> Import Leads
+    </a>
+    <button class="btn"
             hx-post="{{ url_for('start_job', name='pipeline-intake') }}"
             hx-target="#jobs-tbody" hx-swap="afterbegin"
             onclick="setTimeout(() => document.getElementById('jobs-card').scrollIntoView({behavior:'smooth',block:'start'}), 250);"
-            title="Discover new prospects → enrich them with live signals → qualify into hot/warm/cold">
+            title="discover → enrich → qualify in one go">
       <i data-lucide="zap"></i> Run Pipeline
     </button>
     <a class="btn" href="{{ url_for('automation') }}">

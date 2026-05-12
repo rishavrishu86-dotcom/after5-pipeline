@@ -26,6 +26,9 @@
       <a href="{{ url_for('companies') }}" {% if request.endpoint in ('companies','company_detail') %}class="active"{% endif %}>
         <i data-lucide="building-2"></i> Leads
       </a>
+      <a href="{{ url_for('upload_csv') }}" {% if request.endpoint=='upload_csv' %}class="active"{% endif %}>
+        <i data-lucide="upload"></i> Import Leads
+      </a>
       <a href="{{ url_for('contacts_page') }}" {% if request.endpoint=='contacts_page' %}class="active"{% endif %}>
         <i data-lucide="users"></i> Contacts
       </a>
