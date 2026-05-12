@@ -13,7 +13,7 @@ services:
     autoDeploy: true
     envVars:
       - key: APP_PASSWORD
-        sync: false        # set in Render dashboard, never commit
+        value: "change-me"   # rotate from Render dashboard after first boot
       - key: PYTHON_VERSION
         value: "3.11.9"
       - key: HOST
