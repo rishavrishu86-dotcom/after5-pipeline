@@ -191,6 +191,42 @@ def register(app: Flask, login_required) -> None:
             company=company, contacts=contacts_, sends=sends_, touches=touches_,
         )
 
+    @app.route("/automation")
+    @login_required
+    def automation():
+        # Honest disclosure: on Render web tier, the APScheduler daemon
+        # isn't running — only the web server is. We expose this so the
+        # user knows manual triggers are the actual driver here.
+        scheduler_running = False
+        job_specs = [
+            {"name": "discover",      "icon": "violet", "lucide": "radar",
+             "desc": "WF1 — find new UK prospects via DuckDuckGo + hiring-signal + agency sources."},
+            {"name": "enrich",        "icon": "cyan",   "lucide": "search-check",
+             "desc": "WF2 — score new companies on 6 signals (tech, SEO, reviews, ads, hiring, sentiment)."},
+            {"name": "qualify",       "icon": "blue",   "lucide": "filter",
+             "desc": "Bucket enriched companies into hot/warm/cold using 3/6 binary threshold."},
+            {"name": "find-contacts", "icon": "purple", "lucide": "user-search",
+             "desc": "WF3 — find 3 decision makers per qualified company (founder + sales + marketing)."},
+            {"name": "personalise",   "icon": "amber",  "lucide": "sparkles",
+             "desc": "WF4 — Ollama writes a signal-aware first line per contact."},
+            {"name": "send-dry",      "icon": "green",  "lucide": "eye",
+             "desc": "WF5 — render every ready email, print to log, do NOT actually send."},
+            {"name": "send-live",     "icon": "rose",   "lucide": "send",
+             "desc": "WF5 — actually send today's batch over Gmail SMTP. Needs SMTP creds."},
+            {"name": "triage",        "icon": "orange", "lucide": "mail-search",
+             "desc": "WF6 — read replies via IMAP, classify with Ollama, flag needs_louis."},
+            {"name": "bounces",       "icon": "rose",   "lucide": "mail-x",
+             "desc": "Scan MAILER-DAEMON replies, parse DSN, suppress hard bounces (5.x.x)."},
+            {"name": "loom-check",    "icon": "amber",  "lucide": "alarm-clock",
+             "desc": "WF7 — Slack-nudge on interested replies >48h with no Loom sent."},
+        ]
+        return render_template(
+            "automation.html",
+            scheduler_running=scheduler_running,
+            job_specs=job_specs,
+            recent_jobs=jobs.recent(20),
+        )
+
     @app.post("/contacts/<int:cid>/touches")
     @login_required
     def add_touch(cid):

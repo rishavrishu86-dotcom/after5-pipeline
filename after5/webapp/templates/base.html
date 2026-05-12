@@ -42,6 +42,9 @@
         <i data-lucide="mail-open"></i> Replies
         {% if needs_louis_badge %}<span class="tag warm" style="margin-left:auto">{{ needs_louis_badge }}</span>{% endif %}
       </a>
+      <a href="{{ url_for('automation') }}" {% if request.endpoint=='automation' %}class="active"{% endif %}>
+        <i data-lucide="bot"></i> Automation
+      </a>
     </nav>
 
     <div class="sidebar-foot">

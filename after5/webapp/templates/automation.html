@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Automation{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Automation</h1>
+    <p class="lead">Background jobs, scheduled crons, and manual pipeline triggers.</p>
+  </div>
+</div>
+
+<div class="card" style="border-left:3px solid {% if scheduler_running %}var(--success){% else %}var(--warn){% endif %}">
+  <div class="card-head">
+    <h2>Scheduler daemon</h2>
+    {% if scheduler_running %}
+      <span class="badge ok">running</span>
+    {% else %}
+      <span class="badge err">not running on this instance</span>
+    {% endif %}
+  </div>
+  {% if scheduler_running %}
+    <p>Cron jobs fire automatically.</p>
+  {% else %}
+    <p class="muted">
+      On the deployed Render web service the scheduler daemon is <b>not running</b> —
+      the web tier only serves HTTP. To make crons fire automatically you can either:
+    </p>
+    <ul class="muted" style="margin-left:20px;line-height:1.7">
+      <li>Run <code>python -m after5.cli run</code> on a local machine (it stays in foreground).</li>
+      <li>Upgrade Render to a plan that supports <i>Background Workers</i> (paid).</li>
+      <li>Fire jobs from an external cron (GitHub Actions, cron-job.org) hitting <code>POST /jobs/&lt;name&gt;</code>.</li>
+    </ul>
+    <p class="muted">In the meantime, use the manual trigger buttons below — same effect, just operator-driven.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>Cron schedule</h2></div>
+  <table>
+    <thead><tr><th>When</th><th>Job</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Daily 09:00</b><br><small>Europe/London</small></td>
+        <td><code>bounces → triage → send</code></td>
+        <td><small>Suppress new hard-bounces, classify replies, send today's batch.</small></td>
+      </tr>
+      <tr>
+        <td><b>Weekly Mon 06:00</b></td>
+        <td><code>discover → enrich → qualify → find-contacts → personalise</code></td>
+        <td><small>Top up the funnel: pull new prospects, score them, find decision makers, write openers.</small></td>
+      </tr>
+      <tr>
+        <td><b>Every 6 hours</b></td>
+        <td><code>loom-check</code></td>
+        <td><small>WF7 — Slack-nudge Louis on stale interested replies older than 48h with no Loom.</small></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>Manual triggers — every pipeline stage</h2></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
+    {% for job in job_specs %}
+    <div style="background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span class="icon icon-{{ job.icon }}" style="width:32px;height:32px">
+          <i data-lucide="{{ job.lucide }}"></i>
+        </span>
+        <b>{{ job.name }}</b>
+      </div>
+      <p class="muted" style="font-size:13px;margin:0 0 12px">{{ job.desc }}</p>
+      <button class="btn btn-sm btn-indigo" style="width:100%"
+              hx-post="{{ url_for('start_job', name=job.name) }}"
+              hx-target="#auto-jobs-tbody" hx-swap="afterbegin">
+        <i data-lucide="play"></i> Run now
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>Recent runs (this process)</h2></div>
+  <table>
+    <thead><tr><th>Job</th><th>Status</th><th>Started</th><th>Result</th></tr></thead>
+    <tbody id="auto-jobs-tbody">
+      {% for job in recent_jobs %}{% include "_job_row.html" %}{% endfor %}
+      {% if not recent_jobs %}
+        <tr><td colspan="4" class="empty">No jobs run yet in this Flask process.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}
