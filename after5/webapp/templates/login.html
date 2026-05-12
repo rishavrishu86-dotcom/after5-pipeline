@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Sign in · after5</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="auth">
+<form method="post" class="auth-card">
+  <div class="brand">
+    <div class="brand-mark">A5</div>
+    <div style="font-weight:700;font-size:18px">after5 <span style="color:var(--muted);font-weight:400;font-size:12px;letter-spacing:.08em;text-transform:uppercase;display:block">pipeline</span></div>
+  </div>
+
+  <h1>Welcome back</h1>
+  <p class="lead">Sign in to your sales pipeline dashboard.</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, msg in messages %}
+      <div class="flash {{ category }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <label for="password">Password</label>
+  <input id="password" name="password" type="password" autofocus required placeholder="Enter your dashboard password">
+
+  <button class="btn btn-indigo" type="submit">
+    <i data-lucide="log-in"></i> Sign in
+  </button>
+
+  <div class="auth-meta">
+    Set <code style="color:var(--primary-2)">APP_PASSWORD</code> in <code style="color:var(--primary-2)">.env</code> to change this.
+  </div>
+</form>
+<script>lucide.createIcons();</script>
+</body>
+</html>

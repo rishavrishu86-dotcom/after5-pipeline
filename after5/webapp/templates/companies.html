@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Companies{% endblock %}
+
+{% macro score_bar(value, priority) -%}
+  {%- set pct = ((value or 0) * 4)|round(0, 'floor')|int -%}
+  {%- if pct > 100 %}{% set pct = 100 %}{% endif -%}
+  <div class="score">
+    <div class="score-bar {{ priority or 'qualified' }}"><span style="width: {{ pct }}%"></span></div>
+    <span class="score-val">{{ value or 0 }}</span>
+  </div>
+{%- endmacro %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Companies</h1>
+    <p class="lead">{{ rows|length }} shown · cap 300 per view</p>
+  </div>
+</div>
+
+<div class="card">
+  <form method="get" class="filters">
+    <input name="q" value="{{ q }}" placeholder="🔍  Search domain or name">
+    <select name="country">
+      <option value="">All countries</option>
+      <option value="UK" {% if country=='UK' %}selected{% endif %}>UK</option>
+    </select>
+    <select name="status">
+      <option value="">All statuses</option>
+      {% for s in ['new','enriched','qualified','rejected'] %}
+      <option value="{{ s }}" {% if status==s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select name="priority">
+      <option value="">All priorities</option>
+      {% for p in ['hot','warm','cold'] %}
+      <option value="{{ p }}" {% if priority==p %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn"><i data-lucide="filter"></i> Filter</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Company</th><th>Country</th><th>Status</th><th>Priority</th>
+        <th>Tech</th><th>Ads</th><th>Hire</th><th>Revw</th><th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>
+          <div class="stack">
+            <a href="{{ url_for('company_detail', cid=r.id) }}"><b>{{ r.name or r.domain }}</b></a>
+            <small>{{ r.domain }} · {{ r.icp or '—' }}</small>
+          </div>
+        </td>
+        <td>{{ r.country }}</td>
+        <td><span class="tag {{ r.status }}">{{ r.status }}</span></td>
+        <td>{% if r.priority %}<span class="tag {{ r.priority }}">{{ r.priority }}</span>{% else %}<small class="muted">—</small>{% endif %}</td>
+        <td>{{ r.tech_score }}</td>
+        <td>{{ r.ads_score }}</td>
+        <td>{{ r.hiring_score }}</td>
+        <td>{{ r.reviews_score }}</td>
+        <td>{{ score_bar(r.total_score, r.priority) }}</td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+        <tr><td colspan="9" class="empty">No companies match these filters.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}

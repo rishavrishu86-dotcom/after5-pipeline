@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Sent Emails{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Sent Emails</h1>
+    <p class="lead">{{ rows|length }} most recent · all sends logged here</p>
+  </div>
+</div>
+
+{% if not rows %}
+  <div class="card"><div class="empty">No emails sent yet. Run <b>send</b> on the dashboard.</div></div>
+{% endif %}
+
+{% for s in rows %}
+<article class="card" style="margin-bottom:12px">
+  <header style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+    <div>
+      <div><b>{{ s.first_name or '' }} {{ s.last_name or '' }}</b> &lt;{{ s.email }}&gt;</div>
+      <small>{{ s.company_name or s.domain }} · {{ s.country }} · {{ s.sent_at }}</small>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="day-pill">Day {{ s.sequence_day }}</span>
+    </div>
+  </header>
+  <details>
+    <summary style="font-weight:600;cursor:pointer">{{ s.subject }}</summary>
+    <pre style="margin-top:10px">{{ s.body }}</pre>
+    {% if s.message_id %}<small class="muted">message-id: {{ s.message_id }}</small>{% endif %}
+  </details>
+</article>
+{% endfor %}
+{% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}

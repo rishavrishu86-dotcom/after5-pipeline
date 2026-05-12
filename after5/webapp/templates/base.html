@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{% block title %}after5{% endblock %} · after5 pipeline</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand-block">
+      <div class="brand">
+        <div class="brand-mark">A5</div>
+        <div>after5<br><span style="font-weight:400;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em">pipeline</span></div>
+      </div>
+      <div class="brand-sub">{{ smtp_user or 'configure SMTP in .env' }}</div>
+    </div>
+
+    <nav class="nav">
+      <a href="{{ url_for('dashboard') }}" {% if request.endpoint=='dashboard' %}class="active"{% endif %}>
+        <i data-lucide="layout-dashboard"></i> Dashboard
+      </a>
+      <a href="{{ url_for('companies') }}" {% if request.endpoint in ('companies','company_detail') %}class="active"{% endif %}>
+        <i data-lucide="building-2"></i> Leads
+      </a>
+      <a href="{{ url_for('contacts_page') }}" {% if request.endpoint=='contacts_page' %}class="active"{% endif %}>
+        <i data-lucide="users"></i> Contacts
+      </a>
+      <a href="{{ url_for('preview_emails') }}" {% if request.endpoint=='preview_emails' %}class="active"{% endif %}>
+        <i data-lucide="eye"></i> Preview Emails
+      </a>
+      <a href="{{ url_for('sent_emails') }}" {% if request.endpoint=='sent_emails' %}class="active"{% endif %}>
+        <i data-lucide="send"></i> Sent Emails
+      </a>
+      <a href="{{ url_for('template_list') }}" {% if request.endpoint in ('template_list','template_edit') %}class="active"{% endif %}>
+        <i data-lucide="file-text"></i> Templates
+      </a>
+      <a href="{{ url_for('replies') }}" {% if request.endpoint=='replies' %}class="active"{% endif %}>
+        <i data-lucide="mail-open"></i> Replies
+        {% if needs_louis_badge %}<span class="tag warm" style="margin-left:auto">{{ needs_louis_badge }}</span>{% endif %}
+      </a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="who">
+        <div>
+          <b>operator</b>
+          <div class="meta"><i data-lucide="map-pin"></i> {{ country_hint or 'UK + UAE' }}</div>
+        </div>
+        <a href="{{ url_for('logout') }}" class="btn btn-sm btn-ghost" title="logout">
+          <i data-lucide="log-out"></i>
+        </a>
+      </div>
+      <div class="meta"><i data-lucide="globe"></i> after5digital.com</div>
+    </div>
+  </aside>
+
+  <main class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, msg in messages %}
+        <div class="flash {{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<script>lucide.createIcons();</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

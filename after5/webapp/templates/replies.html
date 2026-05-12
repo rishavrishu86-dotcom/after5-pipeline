@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Replies{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Replies</h1>
+    <p class="lead">{{ rows|length }} shown · classified by Ollama</p>
+  </div>
+</div>
+
+<nav class="tabs">
+  <a href="{{ url_for('replies') }}" class="{% if only=='all' %}active{% endif %}">All</a>
+  <a href="{{ url_for('replies', only='needs_louis') }}" class="{% if only=='needs_louis' %}active{% endif %}">
+    <i data-lucide="bell-ring"></i>&nbsp; Needs Louis
+  </a>
+  <a href="{{ url_for('replies', only='interested') }}" class="{% if only=='interested' %}active{% endif %}">Interested</a>
+</nav>
+
+{% for r in rows %}
+<article class="reply {% if r.needs_louis and not r.louis_responded %}alert{% endif %}">
+  <header>
+    <div>
+      <div><b>{{ r.first_name or '' }} {{ r.last_name or '' }}</b> &lt;{{ r.email }}&gt;</div>
+      <small>{{ r.company_name }} · {{ r.country }}</small>
+    </div>
+    <div class="right">
+      {% if r.priority %}<span class="tag {{ r.priority }}">{{ r.priority }}</span>{% endif %}
+      <span class="tag {{ r.classification }}">{{ r.classification }}</span>
+      <small>{{ r.received_at }}</small>
+    </div>
+  </header>
+  <pre>{{ r.raw_body[:1200] }}</pre>
+  <footer>
+    {% if r.classification == 'interested' and not r.louis_responded %}
+      <form method="post" action="{{ url_for('mark_responded', rid=r.id) }}" style="display:inline">
+        <button class="btn btn-primary btn-sm"><i data-lucide="check"></i> Mark responded</button>
+      </form>
+    {% endif %}
+    {% if r.classification == 'interested' and not r.loom_sent %}
+      <form method="post" action="{{ url_for('mark_loom_sent', rid=r.id) }}" style="display:inline">
+        <button class="btn btn-sm"><i data-lucide="video"></i> Mark Loom sent</button>
+      </form>
+    {% endif %}
+    {% if r.classification == 'interested' and not r.louis_responded %}
+      <form method="post" action="{{ url_for('snooze_reply', rid=r.id) }}" style="display:inline">
+        <button class="btn btn-sm btn-ghost"><i data-lucide="clock"></i> Snooze 24h</button>
+      </form>
+    {% endif %}
+    {% if r.louis_responded %}<span class="ok"><i data-lucide="check-check"></i> responded</span>{% endif %}
+    {% if r.loom_sent %}<span class="ok"><i data-lucide="video"></i> loom sent</span>{% endif %}
+  </footer>
+</article>
+{% else %}
+<div class="card"><div class="empty">No replies in this view.</div></div>
+{% endfor %}
+{% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}

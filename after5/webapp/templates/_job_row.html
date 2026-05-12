@@ -1,0 +1,19 @@
+<tr id="job-{{ job.id }}"
+    {% if job.status == 'running' %}
+      hx-get="{{ url_for('poll_job', job_id=job.id) }}"
+      hx-trigger="every 1500ms"
+      hx-swap="outerHTML"
+    {% endif %}>
+  <td><code>{{ job.name }}</code></td>
+  <td>
+    {% if job.status == 'running' %}<span class="badge running">running…</span>
+    {% elif job.status == 'done' %}<span class="badge ok">done</span>
+    {% else %}<span class="badge err">error</span>{% endif %}
+  </td>
+  <td><small>{{ job.started_at | int }}</small></td>
+  <td>
+    {% if job.status == 'done' %}<pre>{{ job.result }}</pre>
+    {% elif job.status == 'error' %}<pre class="err">{{ job.error }}</pre>
+    {% else %}<small class="muted">…</small>{% endif %}
+  </td>
+</tr>

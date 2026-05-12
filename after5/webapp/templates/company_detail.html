@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ company.domain }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('companies') }}"><i data-lucide="arrow-left"></i> All companies</a></p>
+
+<div class="detail-head">
+  <div>
+    <h1>{{ company.name or company.domain }}</h1>
+    <div class="detail-meta">
+      <span>{{ company.domain }}</span>
+      <span class="dot">·</span>
+      <span>{{ company.country }}</span>
+      <span class="dot">·</span>
+      <span>{{ company.icp or 'unknown ICP' }}</span>
+      <span class="dot">·</span>
+      <span class="tag {{ company.status }}">{{ company.status }}</span>
+      {% if company.priority %}<span class="tag {{ company.priority }}">{{ company.priority }}</span>{% endif %}
+    </div>
+  </div>
+  <div>
+    <span class="kpi" style="padding:10px 16px;display:inline-flex;flex-direction:row;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--border-2)">
+      <span class="icon icon-violet" style="width:32px;height:32px"><i data-lucide="zap"></i></span>
+      <span><h3 style="font-size:20px;margin:0">{{ company.total_score }}</h3><p>total score</p></span>
+    </span>
+  </div>
+</div>
+
+<div class="grid-main">
+  <div>
+    <div class="card">
+      <div class="card-head"><h2>Contacts ({{ contacts|length }})</h2></div>
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Verified</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for c in contacts %}
+          <tr>
+            <td><b>{{ c.first_name or '' }} {{ c.last_name or '' }}</b></td>
+            <td>{{ c.email or '—' }}</td>
+            <td><small>{{ c.role or '—' }}</small></td>
+            <td>{% if c.email_verified %}<i data-lucide="badge-check" class="verified"></i>{% endif %}</td>
+            <td>
+              {% if c.unsubscribed %}<span class="tag unsubscribe">unsubbed</span>
+              {% elif c.ready_to_send %}<span class="tag qualified">ready</span>
+              {% else %}<small class="muted">—</small>{% endif %}
+            </td>
+            <td>
+              {% if not c.unsubscribed %}
+                <form method="post" action="{{ url_for('unsub_contact', cid=c.id) }}" style="display:inline">
+                  <button class="btn btn-sm btn-danger"><i data-lucide="user-minus"></i></button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not contacts %}
+            <tr><td colspan="6" class="empty">No contacts yet — run find-contacts or import-people.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Sends ({{ sends|length }})</h2></div>
+      <table>
+        <thead><tr><th>When</th><th>Day</th><th>To</th><th>Subject</th></tr></thead>
+        <tbody>
+          {% for s in sends %}
+          <tr>
+            <td><small>{{ s.sent_at }}</small></td>
+            <td><span class="day-pill">D{{ s.sequence_day }}</span></td>
+            <td>{{ s.email }}</td>
+            <td>{{ s.subject }}</td>
+          </tr>
+          {% endfor %}
+          {% if not sends %}<tr><td colspan="4" class="empty">No emails sent yet.</td></tr>{% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-head"><h2>Signal scores</h2></div>
+      <table>
+        <tr><th>tech</th><td>{{ company.tech_score }}</td></tr>
+        <tr><th>ads</th><td>{{ company.ads_score }}</td></tr>
+        <tr><th>hiring</th><td>{{ company.hiring_score }}</td></tr>
+        <tr><th>reviews</th><td>{{ company.reviews_score }}</td></tr>
+        <tr><th>sentiment</th><td>{{ company.sentiment_score }}</td></tr>
+      </table>
+    </div>
+    {% if company.signals %}
+    <div class="card">
+      <div class="card-head"><h2>Raw signals</h2></div>
+      <pre>{{ company.signals }}</pre>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}

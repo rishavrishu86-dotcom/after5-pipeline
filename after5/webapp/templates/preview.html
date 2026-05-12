@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Preview Emails{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Preview Emails</h1>
+    <p class="lead">Exactly what would go out next for every ready-to-send contact.</p>
+  </div>
+</div>
+
+<nav class="tabs">
+  <a href="{{ url_for('preview_emails') }}" class="{% if not day_filter %}active{% endif %}">All</a>
+  {% for d in [1, 3, 7] %}
+    <a href="{{ url_for('preview_emails', day=d) }}" class="{% if day_filter == d|string %}active{% endif %}">
+      Day {{ d }}
+    </a>
+  {% endfor %}
+</nav>
+
+{% if not rows %}
+  <div class="card"><div class="empty">Nothing ready to send yet. Run <b>personalise</b> on the dashboard first.</div></div>
+{% endif %}
+
+{% for r in rows %}
+<article class="card" style="margin-bottom:14px">
+  <header style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:12px;flex-wrap:wrap">
+    <div>
+      <div><b>{{ r.first_name or '' }} {{ r.last_name or '' }}</b> &lt;{{ r.email }}&gt;</div>
+      <small>{{ r.company_name or r.domain }} · {{ r.country }} · signal: {{ r.signal_used or '—' }}</small>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="day-pill">Day {{ r.next_send_day or 1 }}</span>
+      {% if r.priority %}<span class="tag {{ r.priority }}">{{ r.priority }}</span>{% endif %}
+    </div>
+  </header>
+
+  <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px">
+    <div style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px">
+      <small class="muted">Subject</small>
+      <div style="font-weight:600;margin-top:2px">{{ r.subject }}</div>
+    </div>
+    <small class="muted">Body</small>
+    <pre style="background:transparent;border:0;padding:8px 0 0;color:var(--fg)">{{ r.body }}</pre>
+  </div>
+</article>
+{% endfor %}
+{% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}

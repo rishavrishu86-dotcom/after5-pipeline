@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Contacts{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Contacts</h1>
+    <p class="lead">{{ rows|length }} shown · cap 300 per view</p>
+  </div>
+</div>
+
+<nav class="tabs">
+  {% for f in ['all','ready','verified','sent','unsub'] %}
+  <a href="{{ url_for('contacts_page', filter=f) }}"
+     class="{% if filter==f %}active{% endif %}">{{ f }}</a>
+  {% endfor %}
+</nav>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th><th>Email</th><th>Role</th><th>Company</th>
+        <th>Priority</th><th>Score</th><th>Status</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in rows %}
+      <tr>
+        <td><b>{{ c.first_name or '' }} {{ c.last_name or '' }}</b></td>
+        <td>
+          {{ c.email or '—' }}
+          {% if c.email_verified %}<i data-lucide="badge-check" class="verified" title="Hunter-verified"></i>{% endif %}
+        </td>
+        <td><small>{{ c.role or '—' }}</small></td>
+        <td><small>{{ c.company_name or '' }} · {{ c.country }}</small></td>
+        <td>{% if c.priority %}<span class="tag {{ c.priority }}">{{ c.priority }}</span>{% else %}<small class="muted">—</small>{% endif %}</td>
+        <td>{{ c.total_score or 0 }}</td>
+        <td>
+          {% if c.unsubscribed %}<span class="tag unsubscribe">unsubbed</span>
+          {% elif c.ready_to_send %}
+            <span class="tag qualified">ready</span> <span class="day-pill">D{{ c.next_send_day or '?' }}</span>
+          {% else %}<small class="muted">—</small>{% endif %}
+        </td>
+        <td>
+          {% if not c.unsubscribed and c.email %}
+            <form method="post" action="{{ url_for('unsub_contact', cid=c.id) }}" style="display:inline">
+              <button class="btn btn-sm btn-danger" title="unsubscribe"><i data-lucide="user-minus"></i></button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+        <tr><td colspan="8" class="empty">No contacts in this view.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}

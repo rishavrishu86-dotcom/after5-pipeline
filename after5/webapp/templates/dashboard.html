@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% macro source_mark(src) -%}
+  {%- set s = (src or '?')|string -%}
+  <span class="src-mark" title="{{ s }}">{{ s[0]|upper if s else '?' }}</span>
+{%- endmacro %}
+
+{% macro score_bar(value, priority) -%}
+  {%- set pct = ((value or 0) * 4)|round(0, 'floor')|int -%}
+  {%- if pct > 100 %}{% set pct = 100 %}{% endif -%}
+  <div class="score">
+    <div class="score-bar {{ priority or 'qualified' }}"><span style="width: {{ pct }}%"></span></div>
+    <span class="score-val">{{ value or 0 }}</span>
+  </div>
+{%- endmacro %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="lead">Welcome back! Here's your sales pipeline overview.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-primary"
+            hx-post="{{ url_for('start_job', name='enrich') }}"
+            hx-target="#jobs-tbody" hx-swap="afterbegin">
+      <i data-lucide="radar"></i> Run Enrich
+    </button>
+    <button class="btn"
+            hx-get="#" onclick="document.getElementById('jobs-card').scrollIntoView({behavior:'smooth'});return false;">
+      <i data-lucide="bot"></i> Automation
+    </button>
+  </div>
+</div>
+
+<section class="kpis">
+  <div class="kpi">
+    <div class="icon icon-violet"><i data-lucide="users"></i></div>
+    <h3>{{ kpis.total }}</h3>
+    <p>Total Leads</p>
+  </div>
+  <div class="kpi">
+    <div class="icon icon-purple"><i data-lucide="sparkles"></i></div>
+    <h3>{{ kpis.new }}</h3>
+    <p>New Leads</p>
+  </div>
+  <div class="kpi">
+    <div class="icon icon-cyan"><i data-lucide="phone"></i></div>
+    <h3>{{ kpis.contacted }}</h3>
+    <p>Contacted</p>
+  </div>
+  <div class="kpi">
+    <div class="icon icon-blue"><i data-lucide="trending-up"></i></div>
+    <h3>{{ kpis.qualified }}</h3>
+    <p>Qualified</p>
+  </div>
+  <div class="kpi {% if kpis.needs_louis %}focus{% endif %}">
+    <div class="icon icon-amber"><i data-lucide="thumbs-up"></i></div>
+    <h3>{{ kpis.interested }}</h3>
+    <p>Interested <span class="sub">(replied)</span></p>
+  </div>
+  <div class="kpi">
+    <div class="icon icon-green"><i data-lucide="check-circle-2"></i></div>
+    <h3>{{ kpis.needs_louis }}</h3>
+    <p>Needs Louis</p>
+  </div>
+  <div class="kpi">
+    <div class="icon icon-rose"><i data-lucide="mail"></i></div>
+    <h3>{{ kpis.sent }}</h3>
+    <p>Emails Sent</p>
+  </div>
+</section>
+
+<section class="grid-main">
+  <div>
+    <div class="card">
+      <div class="card-head">
+        <h2>Recent Leads</h2>
+        <a class="btn btn-sm btn-ghost" href="{{ url_for('companies') }}">View All <i data-lucide="arrow-right"></i></a>
+      </div>
+      {% if recent_leads %}
+      <table>
+        <thead>
+          <tr>
+            <th>Company</th><th>Contact</th><th>Source</th>
+            <th>Score</th><th>Status</th><th>Signal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in recent_leads %}
+          <tr>
+            <td>
+              <div class="stack">
+                <a href="{{ url_for('company_detail', cid=r.id) }}"><b>{{ r.name or r.domain }}</b></a>
+                <small>{{ r.icp or '—' }} · {{ r.country }}</small>
+              </div>
+            </td>
+            <td>
+              {% if r.email %}
+                <div class="stack">
+                  <span>{{ r.first_name or '' }} {{ r.last_name or '' }}</span>
+                  <small>{{ r.email }}</small>
+                </div>
+              {% else %}
+                <small class="muted">— no contact</small>
+              {% endif %}
+            </td>
+            <td>
+              <span class="source-chip">{{ source_mark(r.source) }} {{ r.source or 'manual' }}</span>
+            </td>
+            <td>{{ score_bar(r.total_score, r.priority) }}</td>
+            <td><span class="tag {{ r.status }}">{{ r.status }}</span></td>
+            <td><small>{{ r.signal_used or '—' }}</small></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <div class="empty">No leads yet. Run <b>seed</b> with a CSV to get started.</div>
+      {% endif %}
+    </div>
+
+    <div class="card" id="jobs-card">
+      <div class="card-head">
+        <h2>Run a pipeline job</h2>
+      </div>
+      <div class="jobs-bar">
+        {% for name in job_names %}
+          <button hx-post="{{ url_for('start_job', name=name) }}"
+                  hx-target="#jobs-tbody" hx-swap="afterbegin">
+            <i data-lucide="play"></i> {{ name }}
+          </button>
+        {% endfor %}
+      </div>
+      <table>
+        <thead><tr><th>Job</th><th>Status</th><th>Started</th><th>Result</th></tr></thead>
+        <tbody id="jobs-tbody">
+          {% for job in recent_jobs %}{% include "_job_row.html" %}{% endfor %}
+          {% if not recent_jobs %}
+            <tr><td colspan="4" class="empty">No jobs run yet — fire one above.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-head"><h2>Top Sources</h2></div>
+      {% if top_sources %}
+        <div class="src-list">
+          {% for s in top_sources %}
+            <div class="row">
+              <span class="name">{{ s.name|capitalize }}</span>
+              <span class="count">{{ s.count }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty">No data yet.</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Recent Activity</h2></div>
+      {% if activity %}
+        <div class="feed">
+          {% for a in activity %}
+            <div class="row">
+              <div class="dot
+                {%- if a.kind=='reply' %} amber
+                {%- elif a.kind=='send' %} green
+                {%- elif a.kind=='company' %} {% endif %}">
+                {% if a.kind=='reply' %}<i data-lucide="message-square"></i>
+                {% elif a.kind=='send' %}<i data-lucide="send"></i>
+                {% else %}<i data-lucide="user-plus"></i>{% endif %}
+              </div>
+              <div class="body">
+                <b>{{ a.label }}</b>
+                <div class="when">{{ a.kind }} · {{ a.ts }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty">Nothing yet.</div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}

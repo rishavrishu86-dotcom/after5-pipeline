@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Templates{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Email Templates</h1>
+    <p class="lead">The Jinja templates the pipeline renders for each send. Edit any file — saves to disk.</p>
+  </div>
+</div>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr><th>Country</th><th>File</th><th>Size</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for t in items %}
+      <tr>
+        <td>{{ t.country }}</td>
+        <td><code>{{ t.name }}</code></td>
+        <td><small>{{ t.size }} B</small></td>
+        <td>
+          <a class="btn btn-sm" href="{{ url_for('template_edit', rel=t.path) }}">
+            <i data-lucide="edit-3"></i> Edit
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not items %}
+        <tr><td colspan="4" class="empty">No template files found.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:18px">
+  <h2 style="margin-top:0;font-size:14px;text-transform:uppercase;color:var(--muted-2);letter-spacing:.06em">
+    Variables you can use
+  </h2>
+  <ul style="margin:0;padding-left:20px;color:var(--muted)">
+    <li><code>{% raw %}{{ first_name }}{% endraw %}</code> — contact first name (falls back to "there")</li>
+    <li><code>{% raw %}{{ company_name }}{% endraw %}</code> — company display name</li>
+    <li><code>{% raw %}{{ ai_first_line }}{% endraw %}</code> — the Ollama-generated opener for this contact</li>
+    <li><code>{% raw %}{{ signal_used }}{% endraw %}</code> — which signal (ads/hiring/tech/reviews) the opener references</li>
+    <li><code>{% raw %}{{ unsubscribe }}{% endraw %}</code> — unsubscribe mailto link</li>
+  </ul>
+</div>
+{% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}
