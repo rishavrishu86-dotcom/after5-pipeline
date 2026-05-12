@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Setup{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Setup</h1>
+    <p class="lead">What's configured vs what's still missing. Tick everything in the must-have rows before going live.</p>
+  </div>
+</div>
+
+{% for g in groups %}
+<div class="card" style="margin-bottom:14px">
+  <div class="card-head"><h2>{{ g.label }}</h2></div>
+  <table>
+    <thead>
+      <tr><th>Env var</th><th>Status</th><th>Value</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      {% for it in g.rows %}
+      <tr>
+        <td><code>{{ it.key }}</code></td>
+        <td>
+          {% if it.ok %}<span class="badge ok">set</span>
+          {% else %}<span class="badge {{ 'err' if not it.recommended else 'running' }}">{{ 'missing' if not it.recommended else 'recommended' }}</span>
+          {% endif %}
+        </td>
+        <td><small class="muted">{{ it.display or '—' }}</small></td>
+        <td><small>{{ it.purpose }}</small></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endfor %}
+
+<div class="card">
+  <div class="card-head"><h2>External cron URLs</h2></div>
+  {% if not token_set %}
+    <p class="muted">
+      <i data-lucide="alert-triangle"></i>
+      <code>CRON_TOKEN</code> is not set — these URLs won't accept calls yet.
+      Generate one with <code>python -c "import secrets; print(secrets.token_urlsafe(32))"</code>
+      and add it as <code>CRON_TOKEN</code> in Render's Environment tab.
+    </p>
+  {% endif %}
+  <p>Paste these into <a href="https://cron-job.org/en/" target="_blank">cron-job.org</a> (free, no card) so the pipeline runs unattended without needing a paid scheduler:</p>
+  <table>
+    <thead><tr><th>Job</th><th>When</th><th>URL</th></tr></thead>
+    <tbody>
+      {% for c in cron_jobs %}
+      <tr>
+        <td><code>{{ c.name }}</code></td>
+        <td><small>{{ c.when }}</small></td>
+        <td>
+          <code style="font-size:11px;word-break:break-all">{{ host }}/cron/{{ c.name }}?token=&lt;CRON_TOKEN&gt;</code>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <div class="card-head"><h2>Domain DNS records</h2></div>
+  <p>Once you've bought a sending domain at Porkbun (or similar), generate the SPF/DKIM/DMARC records:</p>
+  <form method="get" action="{{ url_for('setup_dns') }}" class="filters">
+    <input name="domain" placeholder="e.g. after5sending.co.uk" class="input" style="min-width:280px">
+    <button class="btn btn-indigo"><i data-lucide="key"></i> Generate records</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <div class="card-head"><h2>Login password (best practice)</h2></div>
+  <p>For production, use <code>APP_PASSWORD_HASH</code> instead of plaintext. Generate locally:</p>
+<pre>python -c "from werkzeug.security import generate_password_hash as h; print(h(input('password: ')))"</pre>
+  <p class="muted">Paste the long output into Render → Environment → <code>APP_PASSWORD_HASH</code>. Once set, the plaintext <code>APP_PASSWORD</code> is ignored.</p>
+</div>
+{% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}

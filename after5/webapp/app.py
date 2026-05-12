@@ -183,7 +183,7 @@ def create_app() -> Flask:
 
     # Routes module attaches the rest, gated by login_required.
     routes.register(app, login_required)
-    jobs.register(app, login_required)
+    jobs.register(app, login_required, csrf=csrf)
     return app
 
 

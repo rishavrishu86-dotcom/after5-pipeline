@@ -52,6 +52,9 @@
       <a href="{{ url_for('automation') }}" {% if request.endpoint=='automation' %}class="active"{% endif %}>
         <i data-lucide="bot"></i> Automation
       </a>
+      <a href="{{ url_for('setup_status') }}" {% if request.endpoint in ('setup_status','setup_dns') %}class="active"{% endif %}>
+        <i data-lucide="settings"></i> Setup
+      </a>
     </nav>
 
     <div class="sidebar-foot">

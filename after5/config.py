@@ -28,6 +28,10 @@ OLLAMA_MODEL = _get("OLLAMA_MODEL", "llama3.1:8b")
 GROQ_API_KEY = _get("GROQ_API_KEY")
 GROQ_MODEL = _get("GROQ_MODEL", "llama-3.1-70b-versatile")
 
+# Shared secret for external cron triggers (e.g. cron-job.org → /cron/<job>).
+# Generate with `python -c "import secrets; print(secrets.token_urlsafe(32))"`.
+CRON_TOKEN = _get("CRON_TOKEN")
+
 SLACK_WEBHOOK_URL = _get("SLACK_WEBHOOK_URL")
 META_AD_LIBRARY_TOKEN = _get("META_AD_LIBRARY_TOKEN")
 HUNTER_API_KEY = _get("HUNTER_API_KEY")

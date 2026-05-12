@@ -193,6 +193,120 @@ def register(app: Flask, login_required) -> None:
             company=company, contacts=contacts_, sends=sends_, touches=touches_,
         )
 
+    @app.route("/setup")
+    @login_required
+    def setup_status():
+        """Operator cockpit — shows which env vars are set and what's missing.
+
+        This is the page you stare at when going from demo → production.
+        """
+        from .. import config as cfg
+        import os
+        def chk(value, *, recommended: bool = False, secret: bool = True) -> dict:
+            ok = bool(value and str(value).strip())
+            display = "" if not ok else ("●●●●●" if secret else str(value))
+            return {"ok": ok, "recommended": recommended, "display": display}
+
+        groups = [
+            {
+                "label": "Auth (must-have)",
+                "rows": [
+                    {"key": "APP_PASSWORD",       "purpose": "Dashboard login password (or use hash below)",   **chk(cfg.APP_PASSWORD)},
+                    {"key": "APP_PASSWORD_HASH",  "purpose": "werkzeug hash — preferred over plaintext",       **chk(os.environ.get("APP_PASSWORD_HASH"), recommended=True)},
+                    {"key": "FLASK_SECRET_KEY",   "purpose": "Session signing key (Render auto-generates)",    **chk(os.environ.get("FLASK_SECRET_KEY"))},
+                    {"key": "CRON_TOKEN",         "purpose": "Shared secret for /cron/<job> webhook",          **chk(cfg.CRON_TOKEN, recommended=True)},
+                ],
+            },
+            {
+                "label": "Sending (must-have for real email)",
+                "rows": [
+                    {"key": "SMTP_USER",     "purpose": "Sending Gmail address",                  **chk(cfg.SMTP_USER, secret=False)},
+                    {"key": "SMTP_PASS",     "purpose": "Gmail App Password (16-char)",           **chk(cfg.SMTP_PASS)},
+                    {"key": "SENDER_NAME",   "purpose": "Display name in From: header",           **chk(cfg.SENDER_NAME, secret=False)},
+                    {"key": "REPLY_TO",      "purpose": "Reply-to email address",                 **chk(cfg.REPLY_TO,   secret=False)},
+                ],
+            },
+            {
+                "label": "AI personalisation (recommended)",
+                "rows": [
+                    {"key": "GROQ_API_KEY",  "purpose": "Cloud LLM (free tier, Llama 3.1 70B)",   **chk(cfg.GROQ_API_KEY, recommended=True)},
+                    {"key": "OLLAMA_HOST",   "purpose": "Local Ollama URL (dev only)",            **chk(cfg.OLLAMA_HOST, secret=False)},
+                ],
+            },
+            {
+                "label": "Optional integrations",
+                "rows": [
+                    {"key": "SLACK_WEBHOOK_URL", "purpose": "Needs-Louis pings",                  **chk(cfg.SLACK_WEBHOOK_URL)},
+                    {"key": "HUNTER_API_KEY",    "purpose": "Real contact enrichment (25/mo)",   **chk(cfg.HUNTER_API_KEY, recommended=True)},
+                    {"key": "META_AD_LIBRARY_TOKEN", "purpose": "Better ads signal",              **chk(cfg.META_AD_LIBRARY_TOKEN)},
+                ],
+            },
+            {
+                "label": "Mode",
+                "rows": [
+                    {"key": "DEMO_SEED", "purpose": "Reset to demo data on cold start (set to 0 in production)",
+                     "ok": os.environ.get("DEMO_SEED", "").lower() in ("0", "false", "no"),
+                     "recommended": True, "display": os.environ.get("DEMO_SEED", "(unset)")},
+                ],
+            },
+        ]
+
+        # External cron URLs the operator needs to paste into cron-job.org.
+        host = request.host_url.rstrip("/")
+        token_set = bool(cfg.CRON_TOKEN)
+        cron_jobs = [
+            {"name": "pipeline-intake",  "when": "Weekly, Monday 06:00 UK"},
+            {"name": "triage",           "when": "Daily 09:00 UK"},
+            {"name": "bounces",          "when": "Daily 09:00 UK"},
+            {"name": "send-live",        "when": "Daily 09:00 UK"},
+            {"name": "loom-check",       "when": "Every 6 hours"},
+        ]
+        return render_template(
+            "setup.html",
+            groups=groups, cron_jobs=cron_jobs,
+            host=host, token_set=token_set,
+        )
+
+    @app.route("/setup/dns")
+    @login_required
+    def setup_dns():
+        """Generate SPF / DKIM / DMARC DNS records for any sending domain.
+
+        Real DKIM needs a signed selector from Google Workspace's Admin
+        Console. We surface the *template* + the exact Workspace steps.
+        """
+        domain = (request.args.get("domain") or "").strip().lower()
+        records = []
+        if domain:
+            records = [
+                {
+                    "type": "TXT", "host": "@",
+                    "value": "v=spf1 include:_spf.google.com ~all",
+                    "note": "Authorises Gmail to send for this domain. Required.",
+                },
+                {
+                    "type": "TXT", "host": "google._domainkey",
+                    "value": "(generated in Google Workspace Admin → Apps → Gmail → Authenticate email — paste the value Google gives you)",
+                    "note": "Without this real DKIM signature, ~50% of mail goes to spam.",
+                },
+                {
+                    "type": "TXT", "host": "_dmarc",
+                    "value": f"v=DMARC1; p=quarantine; rua=mailto:dmarc@{domain}; pct=10; aspf=s; adkim=s",
+                    "note": "Start permissive (p=quarantine, pct=10) — graduate to p=reject once you see no false positives.",
+                },
+                {
+                    "type": "TXT", "host": "@",
+                    "value": f"google-site-verification=(paste from Google Workspace setup)",
+                    "note": "Only if you're setting up Workspace on this domain.",
+                },
+                {
+                    "type": "MX", "host": "@",
+                    "value": "1 ASPMX.L.GOOGLE.COM",
+                    "note": "Plus the 4 secondary Google MX records — see Workspace setup wizard.",
+                },
+            ]
+        return render_template("setup_dns.html", domain=domain, records=records)
+
     @app.route("/upload", methods=["GET", "POST"])
     @login_required
     def upload_csv():

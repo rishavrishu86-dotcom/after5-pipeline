@@ -117,7 +117,7 @@ def recent(n: int = 12) -> list[dict]:
     return rows[:n]
 
 
-def register(app: Flask, login_required) -> None:
+def register(app: Flask, login_required, csrf=None) -> None:
     @app.post("/jobs/<name>")
     @login_required
     def start_job(name):
@@ -134,3 +134,28 @@ def register(app: Flask, login_required) -> None:
         if not job:
             abort(404)
         return render_template("_job_row.html", job=job)
+
+    @app.route("/cron/<name>", methods=["GET", "POST"])
+    def cron_trigger(name):
+        """Token-gated external cron entry point.
+
+        Configure cron-job.org (free, no CC) to hit:
+          https://<your-host>/cron/pipeline-intake?token=<CRON_TOKEN>
+          https://<your-host>/cron/loom-check?token=<CRON_TOKEN>
+          https://<your-host>/cron/triage?token=<CRON_TOKEN>
+          https://<your-host>/cron/bounces?token=<CRON_TOKEN>
+          https://<your-host>/cron/send-live?token=<CRON_TOKEN>
+        """
+        from .. import config as _config
+        token = request.args.get("token", "") or request.headers.get("X-Cron-Token", "")
+        if not _config.CRON_TOKEN or token != _config.CRON_TOKEN:
+            _audit("cron_fail", request.remote_addr or "?", name)
+            abort(403)
+        if name not in JOB_FACTORIES:
+            abort(404)
+        job_id = start(name)
+        _audit(f"cron:{name}", request.remote_addr or "?", job_id)
+        return jsonify({"ok": True, "job_id": job_id, "name": name})
+
+    if csrf is not None:
+        csrf.exempt(cron_trigger)
