@@ -307,6 +307,20 @@ def register(app: Flask, login_required) -> None:
             ]
         return render_template("setup_dns.html", domain=domain, records=records)
 
+    @app.route("/walkthrough")
+    def walkthrough():
+        """Public implementation-walkthrough doc — no login required.
+
+        Content is just architecture/explanation, no sensitive data, so Louis
+        can read it directly from a shared link without needing the dashboard
+        password.
+        """
+        doc_path = (Path(__file__).resolve().parent.parent.parent
+                    / "docs" / "pipeline-walkthrough.html")
+        if not doc_path.is_file():
+            return ("not found", 404)
+        return doc_path.read_text(), 200, {"Content-Type": "text/html; charset=utf-8"}
+
     @app.route("/upload", methods=["GET", "POST"])
     @login_required
     def upload_csv():
