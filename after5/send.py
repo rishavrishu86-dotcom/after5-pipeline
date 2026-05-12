@@ -41,10 +41,13 @@ def render_for_contact(contact: dict, day: int | None = None) -> tuple[str, str]
     """
     day = day or contact.get("next_send_day") or 1
     ctx = {
-        "first_name":   contact.get("first_name") or "there",
-        "company_name": contact.get("company_name") or contact.get("domain") or "your team",
+        "first_name":    contact.get("first_name") or "there",
+        "company_name":  contact.get("company_name") or contact.get("domain") or "your team",
+        "domain":        contact.get("domain") or "",
+        "icp":           contact.get("icp") or "",
         "ai_first_line": contact.get("ai_first_line") or "",
         "signal_used":   contact.get("signal_used") or "",
+        "role":          contact.get("role") or "",
         "unsubscribe":   f"mailto:{config.REPLY_TO}?subject=unsubscribe",
     }
     return _render(contact.get("country", "UK"), day, ctx)
@@ -75,7 +78,7 @@ def _mx_ok(domain: str) -> bool:
 def _due_contacts(limit: int) -> list[dict]:
     return db.fetchall(
         """
-        SELECT c.*, co.country, co.name AS company_name, co.domain
+        SELECT c.*, co.country, co.name AS company_name, co.domain, co.icp
         FROM contacts c
         JOIN companies co ON co.id = c.company_id
         WHERE co.status = 'qualified'

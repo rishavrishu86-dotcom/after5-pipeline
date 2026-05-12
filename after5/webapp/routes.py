@@ -239,9 +239,9 @@ def register(app: Flask, login_required) -> None:
             params.append(int(day_filter))
         rows = db.fetchall(
             f"""
-            SELECT c.id, c.first_name, c.last_name, c.email, c.signal_used,
+            SELECT c.id, c.first_name, c.last_name, c.email, c.role, c.signal_used,
                    c.ai_first_line, c.next_send_day,
-                   co.name AS company_name, co.domain, co.country, co.priority
+                   co.name AS company_name, co.domain, co.country, co.priority, co.icp
             FROM contacts c JOIN companies co ON co.id=c.company_id
             WHERE {clause} AND co.status='qualified'
             ORDER BY co.total_score DESC, c.id DESC LIMIT 50
