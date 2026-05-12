@@ -33,16 +33,19 @@
   <footer>
     {% if r.classification == 'interested' and not r.louis_responded %}
       <form method="post" action="{{ url_for('mark_responded', rid=r.id) }}" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-primary btn-sm"><i data-lucide="check"></i> Mark responded</button>
       </form>
     {% endif %}
     {% if r.classification == 'interested' and not r.loom_sent %}
       <form method="post" action="{{ url_for('mark_loom_sent', rid=r.id) }}" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-sm"><i data-lucide="video"></i> Mark Loom sent</button>
       </form>
     {% endif %}
     {% if r.classification == 'interested' and not r.louis_responded %}
       <form method="post" action="{{ url_for('snooze_reply', rid=r.id) }}" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-sm btn-ghost"><i data-lucide="clock"></i> Snooze 24h</button>
       </form>
     {% endif %}

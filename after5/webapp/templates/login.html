@@ -8,6 +8,7 @@
 </head>
 <body class="auth">
 <form method="post" class="auth-card">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="brand">
     <div class="brand-mark">A5</div>
     <div style="font-weight:700;font-size:18px">after5 <span style="color:var(--muted);font-weight:400;font-size:12px;letter-spacing:.08em;text-transform:uppercase;display:block">pipeline</span></div>

@@ -20,8 +20,8 @@
         <td><code>{{ t.name }}</code></td>
         <td><small>{{ t.size }} B</small></td>
         <td>
-          <a class="btn btn-sm" href="{{ url_for('template_edit', rel=t.path) }}">
-            <i data-lucide="edit-3"></i> Edit
+          <a class="btn btn-sm" href="{{ url_for('template_view', rel=t.path) }}">
+            <i data-lucide="eye"></i> View
           </a>
         </td>
       </tr>

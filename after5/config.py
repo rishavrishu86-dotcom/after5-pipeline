@@ -22,6 +22,12 @@ REPLY_TO = _get("REPLY_TO", SMTP_USER)
 OLLAMA_HOST = _get("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_MODEL = _get("OLLAMA_MODEL", "llama3.1:8b")
 
+# Optional Groq fallback for AI personalisation / triage. Free tier gives
+# Llama-3.1-70B at ~30 req/min — materially better than local llama3.1:8b.
+# When set, ai.py prefers Groq; otherwise it tries local Ollama.
+GROQ_API_KEY = _get("GROQ_API_KEY")
+GROQ_MODEL = _get("GROQ_MODEL", "llama-3.1-70b-versatile")
+
 SLACK_WEBHOOK_URL = _get("SLACK_WEBHOOK_URL")
 META_AD_LIBRARY_TOKEN = _get("META_AD_LIBRARY_TOKEN")
 HUNTER_API_KEY = _get("HUNTER_API_KEY")

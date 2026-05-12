@@ -96,3 +96,13 @@ CREATE TABLE IF NOT EXISTS touches (
   created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_touches_contact ON touches(contact_id);
+
+-- Audit log — who did what when. Best-effort, never blocks the action.
+CREATE TABLE IF NOT EXISTS audit_log (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  event       TEXT NOT NULL,
+  who         TEXT,
+  detail      TEXT,
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_audit_event ON audit_log(event, created_at);

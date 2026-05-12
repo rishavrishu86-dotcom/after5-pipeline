@@ -19,6 +19,7 @@
         <code>solar_home_improvement</code>, <code>car_finance</code>, <code>recruitment_agency</code>, <code>gym_fitness</code>.
       </p>
       <form method="post" enctype="multipart/form-data" style="margin-top:18px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="kind" value="companies">
         <input type="file" name="file" accept=".csv" required
                style="display:block;width:100%;margin-bottom:12px;
@@ -34,6 +35,7 @@
       <pre>domain,first_name,last_name,role[,email]</pre>
       <p class="muted">If <code>email</code> is blank we generate <code>first.last@domain</code> + MX-validate.</p>
       <form method="post" enctype="multipart/form-data" style="margin-top:18px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="kind" value="people">
         <input type="file" name="file" accept=".csv" required
                style="display:block;width:100%;margin-bottom:12px;

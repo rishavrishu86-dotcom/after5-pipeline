@@ -14,7 +14,13 @@ services:
     envVars:
       - key: APP_PASSWORD
         sync: false          # set in Render dashboard; never committed to git
+      - key: APP_PASSWORD_HASH
+        sync: false          # optional, takes precedence over APP_PASSWORD
+      - key: FLASK_SECRET_KEY
+        generateValue: true  # Render auto-generates a secret once
       - key: PYTHON_VERSION
         value: "3.11.9"
       - key: HOST
         value: "0.0.0.0"
+      - key: DEMO_SEED
+        value: "1"           # SET TO 0 for production once you've loaded real data

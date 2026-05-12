@@ -12,12 +12,16 @@ from after5 import db
 
 
 def main() -> None:
+    import os
     db.init()
+    if os.environ.get("DEMO_SEED", "").lower() not in ("1", "true", "yes"):
+        print("DEMO_SEED env not set — skipping demo seed (production mode).")
+        return
     count = db.fetchone("SELECT COUNT(*) AS n FROM companies")["n"]
     if count > 0:
         print(f"DB has {count} companies — skipping demo seed.")
         return
-    print("Empty DB — seeding demo data...")
+    print("Empty DB + DEMO_SEED=1 — seeding demo data...")
     from examples.demo_seed import main as seed_main
     seed_main()
 

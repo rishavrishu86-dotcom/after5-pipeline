@@ -191,11 +191,33 @@ def _next_sequence_day(current: int) -> int | None:
     return None
 
 
-def unsubscribe(email: str) -> None:
+def unsubscribe(email: str, *, gdpr_delete: bool = True) -> None:
+    """Honour unsubscribe + (by default) UK GDPR Art 17 right to erasure.
+
+    Records the email in `suppression` so future imports/sends never reach
+    them again, then DELETES the personal-data rows in `contacts`,
+    `sends`, `replies`, `touches` for that address. If `gdpr_delete=False`
+    we just flip the flag (legacy behaviour, retained for the rare case
+    where suppression-only is wanted).
+    """
     domain = email.split("@")[-1]
     with db.conn() as c:
-        c.execute("UPDATE contacts SET unsubscribed=1 WHERE email=?", (email,))
         c.execute(
-            "INSERT OR IGNORE INTO suppression (email, domain, reason) VALUES (?, ?, 'unsub')",
+            "INSERT OR IGNORE INTO suppression (email, domain, reason) "
+            "VALUES (?, ?, 'unsub')",
             (email, domain),
         )
+        if not gdpr_delete:
+            c.execute("UPDATE contacts SET unsubscribed=1 WHERE email=?", (email,))
+            return
+        # Find contact_ids first so we can cascade.
+        contact_ids = [
+            r["id"] for r in c.execute(
+                "SELECT id FROM contacts WHERE email=?", (email,)
+            ).fetchall()
+        ]
+        for cid in contact_ids:
+            c.execute("DELETE FROM touches  WHERE contact_id=?", (cid,))
+            c.execute("DELETE FROM sends    WHERE contact_id=?", (cid,))
+            c.execute("DELETE FROM replies  WHERE contact_id=?", (cid,))
+        c.execute("DELETE FROM contacts WHERE email=?", (email,))

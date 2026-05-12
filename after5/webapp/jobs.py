@@ -15,9 +15,20 @@ from typing import Callable
 from flask import Flask, abort, jsonify, render_template, request
 
 from .. import (
-    bounces, contacts, discover, enrich, loom, personalise, qualify,
+    bounces, contacts, db, discover, enrich, loom, personalise, qualify,
     send, triage,
 )
+
+
+def _audit(event: str, who: str, detail: str = "") -> None:
+    try:
+        with db.conn() as c:
+            c.execute(
+                "INSERT INTO audit_log (event, who, detail) VALUES (?, ?, ?)",
+                (event, who, detail),
+            )
+    except Exception:
+        pass  # never block the job on audit failure
 
 _JOBS: dict[str, dict] = {}
 _LOCK = threading.Lock()
@@ -113,6 +124,7 @@ def register(app: Flask, login_required) -> None:
         if name not in JOB_FACTORIES:
             abort(404)
         job_id = start(name)
+        _audit(f"job:{name}", request.remote_addr or "?", job_id)
         return render_template("_job_row.html", job=get(job_id))
 
     @app.get("/jobs/<job_id>")

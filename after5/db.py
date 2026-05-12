@@ -28,6 +28,16 @@ def _migrate(con) -> None:
         con.execute(
             "ALTER TABLE companies ADD COLUMN campaign TEXT DEFAULT 'icp_outreach'"
         )
+    # Audit log table — older DBs may not have it.
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS audit_log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          event TEXT NOT NULL, who TEXT, detail TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
 
 
 @contextmanager

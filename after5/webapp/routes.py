@@ -423,20 +423,20 @@ def register(app: Flask, login_required) -> None:
                 })
         return render_template("templates.html", items=items)
 
-    @app.route("/templates/<path:rel>", methods=["GET", "POST"])
+    @app.route("/templates/<path:rel>", methods=["GET"])
     @login_required
-    def template_edit(rel):
-        # Defence: path must stay inside TEMPLATE_DIR (no ../ traversal).
+    def template_view(rel):
+        """Read-only template viewer.
+
+        The in-app editor was removed: writing arbitrary text to .j2 files
+        which are then rendered server-side is a Jinja SSTI primitive. Edit
+        templates via git instead — Render auto-redeploys on push.
+        """
         target = (TEMPLATE_DIR / rel).resolve()
         if not str(target).startswith(str(TEMPLATE_DIR.resolve())) or not target.is_file():
             return ("not found", 404)
-        if request.method == "POST":
-            body = request.form.get("body", "")
-            target.write_text(body)
-            flash(f"saved {rel}", "ok")
-            return redirect(url_for("template_edit", rel=rel))
         return render_template(
-            "template_edit.html",
+            "template_view.html",
             rel=rel, body=target.read_text(),
         )
 

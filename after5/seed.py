@@ -17,13 +17,18 @@ def _normalise_domain(d: str) -> str:
     return d.split("/")[0]
 
 
+MAX_ROWS = 5000  # cap to prevent runaway imports from a hostile / mis-shaped file
+
+
 def import_csv(path: str | Path) -> tuple[int, int]:
-    """Returns (inserted, skipped)."""
+    """Returns (inserted, skipped). Caps input at MAX_ROWS."""
     path = Path(path)
     inserted = skipped = 0
     with db.conn() as c, path.open(newline="", encoding="utf-8") as fh:
         reader = csv.DictReader(fh)
-        for row in reader:
+        for i, row in enumerate(reader):
+            if i >= MAX_ROWS:
+                break
             domain = _normalise_domain(row.get("domain", ""))
             country = (row.get("country") or "").strip().upper()
             if not domain or country not in ("UK", "UAE"):

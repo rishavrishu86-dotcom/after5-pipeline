@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ rel }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('template_list') }}"><i data-lucide="arrow-left"></i> All templates</a></p>
+
+<div class="page-head">
+  <div>
+    <h1><code>{{ rel }}</code></h1>
+    <p class="lead">Read-only. Edit via git: <code>templates/{{ rel }}</code> in the repo. Render auto-redeploys.</p>
+  </div>
+</div>
+
+<div class="card">
+  <pre style="margin:0">{{ body }}</pre>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <p class="muted" style="margin:0">
+    <i data-lucide="shield"></i>
+    The in-dashboard editor was removed for security — Jinja templates execute
+    server-side, so any text written here would run as Python. To change a
+    template, edit the file in git and push.
+  </p>
+</div>
+{% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}

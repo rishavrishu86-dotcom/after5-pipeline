@@ -48,6 +48,7 @@
             <td>
               {% if not c.unsubscribed %}
                 <form method="post" action="{{ url_for('unsub_contact', cid=c.id) }}" style="display:inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-sm btn-danger"><i data-lucide="user-minus"></i></button>
                 </form>
               {% endif %}
@@ -86,6 +87,7 @@
           {% for c in contacts %}
           <form method="post" action="{{ url_for('add_touch', cid=c.id) }}"
                 style="background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:12px">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div style="margin-bottom:8px"><b>{{ c.first_name or '' }} {{ c.last_name or '' }}</b><br><small>{{ c.email }}</small></div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
               <select name="kind" class="input" style="flex:1;min-width:120px">

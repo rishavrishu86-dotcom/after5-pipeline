@@ -4,11 +4,15 @@
 <meta charset="utf-8">
 <title>{% block title %}after5{% endblock %} · after5 pipeline</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<script src="https://unpkg.com/htmx.org@1.9.10"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/htmx.org@1.9.10"
+        integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
+        crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"
+        crossorigin="anonymous"></script>
 </head>
-<body>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token() }}"}'>
 <div class="layout">
   <aside class="sidebar">
     <div class="brand-block">
@@ -38,7 +42,7 @@
       <a href="{{ url_for('sent_emails') }}" {% if request.endpoint=='sent_emails' %}class="active"{% endif %}>
         <i data-lucide="send"></i> Sent Emails
       </a>
-      <a href="{{ url_for('template_list') }}" {% if request.endpoint in ('template_list','template_edit') %}class="active"{% endif %}>
+      <a href="{{ url_for('template_list') }}" {% if request.endpoint in ('template_list','template_view') %}class="active"{% endif %}>
         <i data-lucide="file-text"></i> Templates
       </a>
       <a href="{{ url_for('replies') }}" {% if request.endpoint=='replies' %}class="active"{% endif %}>
@@ -54,7 +58,7 @@
       <div class="who">
         <div>
           <b>operator</b>
-          <div class="meta"><i data-lucide="map-pin"></i> {{ country_hint or 'UK + UAE' }}</div>
+          <div class="meta"><i data-lucide="map-pin"></i> {{ country_hint or 'UK' }}</div>
         </div>
         <a href="{{ url_for('logout') }}" class="btn btn-sm btn-ghost" title="logout">
           <i data-lucide="log-out"></i>
