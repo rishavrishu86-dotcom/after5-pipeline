@@ -5,6 +5,7 @@ Jobs run in daemon threads. State lives in a process-local dict; restart wipes i
 That's fine: real cron is the scheduler, this is just operator on-demand.
 """
 import io
+import secrets
 import threading
 import time
 import traceback
@@ -117,7 +118,7 @@ def recent(n: int = 12) -> list[dict]:
     return rows[:n]
 
 
-def register(app: Flask, login_required, csrf=None) -> None:
+def register(app: Flask, login_required, csrf=None, limiter=None) -> None:
     @app.post("/jobs/<name>")
     @login_required
     def start_job(name):
@@ -135,27 +136,39 @@ def register(app: Flask, login_required, csrf=None) -> None:
             abort(404)
         return render_template("_job_row.html", job=job)
 
-    @app.route("/cron/<name>", methods=["GET", "POST"])
-    def cron_trigger(name):
+    def _cron_trigger(name):
         """Token-gated external cron entry point.
 
-        Configure cron-job.org (free, no CC) to hit:
-          https://<your-host>/cron/pipeline-intake?token=<CRON_TOKEN>
-          https://<your-host>/cron/loom-check?token=<CRON_TOKEN>
-          https://<your-host>/cron/triage?token=<CRON_TOKEN>
-          https://<your-host>/cron/bounces?token=<CRON_TOKEN>
-          https://<your-host>/cron/send-live?token=<CRON_TOKEN>
+        Configure cron-job.org (free, no CC) to POST with header:
+          URL:    https://<your-host>/cron/<job-name>
+          Method: POST
+          Header: X-Cron-Token: <CRON_TOKEN>
+
+        Token-in-URL is deliberately NOT supported — URLs get logged in
+        Render's access logs, browser history, and Referer headers, which
+        would leak the token. Header-only forces it stays in transit.
         """
         from .. import config as _config
-        token = request.args.get("token", "") or request.headers.get("X-Cron-Token", "")
-        if not _config.CRON_TOKEN or token != _config.CRON_TOKEN:
-            _audit("cron_fail", request.remote_addr or "?", name)
-            abort(403)
+        configured = (_config.CRON_TOKEN or "").strip()
+        supplied = (request.headers.get("X-Cron-Token") or
+                    request.form.get("token") or "").strip()
+        # Timing-safe compare; also rejects when no token is configured.
+        if not configured or not supplied or not secrets.compare_digest(
+            configured, supplied
+        ):
+            abort(403)  # no audit row on failure — rate limit + access log cover it
         if name not in JOB_FACTORIES:
             abort(404)
         job_id = start(name)
         _audit(f"cron:{name}", request.remote_addr or "?", job_id)
         return jsonify({"ok": True, "job_id": job_id, "name": name})
 
+    # Wrap with rate limit BEFORE handing to Flask, so the decorator wraps
+    # the actual view function the limiter inspects.
+    cron_view = _cron_trigger
+    if limiter is not None:
+        cron_view = limiter.limit("30 per minute")(cron_view)
+    app.add_url_rule("/cron/<name>", view_func=cron_view, methods=["POST"],
+                     endpoint="cron_trigger")
     if csrf is not None:
-        csrf.exempt(cron_trigger)
+        csrf.exempt(cron_view)

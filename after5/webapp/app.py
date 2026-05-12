@@ -90,7 +90,26 @@ def login_required(fn):
     return wrapper
 
 
+def _refuse_insecure_boot() -> None:
+    """Refuse to start with no password or the publicly-known default.
+
+    Falls back to a clear error rather than silently accepting `change-me`
+    or empty, which would put a public Render URL behind no real auth.
+    """
+    if os.environ.get("APP_PASSWORD_HASH", "").strip():
+        return  # hash overrides plaintext; no plaintext check needed
+    pw = (config.APP_PASSWORD or "").strip()
+    if not pw or pw.lower() in ("change-me", "changeme", "password", "admin"):
+        raise RuntimeError(
+            "INSECURE BOOT REFUSED — APP_PASSWORD is empty or the known "
+            "default. Set APP_PASSWORD to a strong value, or set "
+            "APP_PASSWORD_HASH (from werkzeug.security.generate_password_hash) "
+            "in your environment. See /setup in the dashboard for guidance."
+        )
+
+
 def create_app() -> Flask:
+    _refuse_insecure_boot()
     app = Flask(__name__)
     app.secret_key = _secret_key()
     app.config.update(
@@ -183,7 +202,7 @@ def create_app() -> Flask:
 
     # Routes module attaches the rest, gated by login_required.
     routes.register(app, login_required)
-    jobs.register(app, login_required, csrf=csrf)
+    jobs.register(app, login_required, csrf=csrf, limiter=limiter)
     return app
 
 

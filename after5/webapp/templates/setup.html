@@ -43,16 +43,26 @@
       and add it as <code>CRON_TOKEN</code> in Render's Environment tab.
     </p>
   {% endif %}
-  <p>Paste these into <a href="https://cron-job.org/en/" target="_blank">cron-job.org</a> (free, no card) so the pipeline runs unattended without needing a paid scheduler:</p>
+  <p>Configure each job at <a href="https://cron-job.org/en/" target="_blank">cron-job.org</a> (free, no card) with:</p>
+  <ul style="margin-left:20px;line-height:1.7">
+    <li><b>Method:</b> POST</li>
+    <li><b>Request header:</b> <code>X-Cron-Token: &lt;your CRON_TOKEN value&gt;</code></li>
+  </ul>
+  <p class="muted">
+    <i data-lucide="shield"></i>
+    Token must be sent as a header — URL-token format is rejected. URLs get
+    logged in Render access logs and browser history, so a token in the URL
+    would leak.
+  </p>
   <table>
-    <thead><tr><th>Job</th><th>When</th><th>URL</th></tr></thead>
+    <thead><tr><th>Job</th><th>When</th><th>URL (POST)</th></tr></thead>
     <tbody>
       {% for c in cron_jobs %}
       <tr>
         <td><code>{{ c.name }}</code></td>
         <td><small>{{ c.when }}</small></td>
         <td>
-          <code style="font-size:11px;word-break:break-all">{{ host }}/cron/{{ c.name }}?token=&lt;CRON_TOKEN&gt;</code>
+          <code style="font-size:11px;word-break:break-all">{{ host }}/cron/{{ c.name }}</code>
         </td>
       </tr>
       {% endfor %}
