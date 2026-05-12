@@ -13,36 +13,43 @@ from after5 import db, send
 random.seed(7)
 
 UK_COS = [
-    ("monzo.com", "Monzo", "fintech"),
-    ("deliveroo.co.uk", "Deliveroo", "marketplace"),
-    ("gymshark.com", "Gymshark", "d2c"),
-    ("revolut.com", "Revolut", "fintech"),
-    ("brewdog.com", "BrewDog", "d2c"),
-    ("ovo.com", "Ovo Energy", "utility"),
-    ("octopus.energy", "Octopus Energy", "utility"),
-    ("starlingbank.com", "Starling Bank", "fintech"),
-    ("trainline.com", "Trainline", "travel"),
-    ("just-eat.co.uk", "Just Eat", "marketplace"),
-    ("asos.com", "ASOS", "d2c"),
-    ("notonthehighstreet.com", "Not On The High Street", "marketplace"),
-    ("zoopla.co.uk", "Zoopla", "proptech"),
-    ("checkatrade.com", "Checkatrade", "marketplace"),
-    ("simplybusiness.co.uk", "Simply Business", "insurtech"),
-    ("vinted.co.uk", "Vinted UK", "marketplace"),
-    ("cazoo.co.uk", "Cazoo", "marketplace"),
-    ("wise.com", "Wise", "fintech"),
-    ("nutmeg.com", "Nutmeg", "fintech"),
-    ("ocado.com", "Ocado", "marketplace"),
-    ("naked-wines.com", "Naked Wines", "d2c"),
-    ("graze.com", "Graze", "d2c"),
-    ("hellofresh.co.uk", "HelloFresh UK", "foodtech"),
-    ("treatwell.co.uk", "Treatwell", "marketplace"),
-    ("rentalcars.com", "Rentalcars.com", "travel"),
-    ("blackcircles.com", "Black Circles", "ecom"),
-    ("smol.co.uk", "Smol", "d2c"),
-    ("snag.co.uk", "Snag Tights", "d2c"),
-    ("appearhere.co.uk", "Appear Here", "proptech"),
-    ("propertypartner.co", "Property Partner", "proptech"),
+    # Real Estate Agencies (primary ICP #1)
+    ("foxtons.co.uk", "Foxtons", "real_estate"),
+    ("hamptons.co.uk", "Hamptons", "real_estate"),
+    ("dexters.co.uk", "Dexters", "real_estate"),
+    ("chestertons.com", "Chestertons", "real_estate"),
+    ("jdwood.co.uk", "John D Wood", "real_estate"),
+    # Mortgage Brokers (primary ICP #2)
+    ("landc.co.uk", "L&C Mortgages", "mortgage_broker"),
+    ("habito.com", "Habito", "mortgage_broker"),
+    ("johncharcol.co.uk", "John Charcol", "mortgage_broker"),
+    ("mojomortgages.com", "Mojo Mortgages", "mortgage_broker"),
+    ("trinityfg.com", "Trinity Financial", "mortgage_broker"),
+    # Car Dealerships (primary ICP #3)
+    ("arnoldclark.com", "Arnold Clark", "car_dealer"),
+    ("sytner.co.uk", "Sytner Group", "car_dealer"),
+    ("lookers.co.uk", "Lookers", "car_dealer"),
+    ("bristolstreet.co.uk", "Bristol Street Motors", "car_dealer"),
+    ("jct600.co.uk", "JCT600", "car_dealer"),
+    # Solar / Home Improvement (primary ICP #4)
+    ("anglianhome.co.uk", "Anglian Home Improvements", "solar_home_improvement"),
+    ("everest.co.uk", "Everest 2020", "solar_home_improvement"),
+    ("eonenergy.com", "E.ON Next", "solar_home_improvement"),
+    ("solarsense-uk.com", "SolarSense", "solar_home_improvement"),
+    ("safestyle.co.uk", "Safestyle UK", "solar_home_improvement"),
+    # Car Finance (primary ICP #5)
+    ("zuto.com", "Zuto", "car_finance"),
+    ("carfinance247.co.uk", "Car Finance 247", "car_finance"),
+    ("moneybarn.com", "Moneybarn", "car_finance"),
+    ("hippomotorfinance.co.uk", "Hippo Motor Finance", "car_finance"),
+    # Recruitment Agencies (secondary ICP)
+    ("hays.co.uk", "Hays", "recruitment_agency"),
+    ("robertwalters.co.uk", "Robert Walters", "recruitment_agency"),
+    ("michaelpage.co.uk", "Michael Page", "recruitment_agency"),
+    # Gyms / Boutique Fitness (secondary ICP)
+    ("puregym.com", "PureGym", "gym_fitness"),
+    ("thegymgroup.com", "The Gym Group", "gym_fitness"),
+    ("thirdspace.london", "Third Space", "gym_fitness"),
 ]
 
 FIRST_NAMES = ["Jordan", "Priya", "Tom", "Anna", "Sam", "Olivia", "Liam", "Sophie",
@@ -141,8 +148,8 @@ def main():
                     ready, unsub, verified, last_sent, current_day, next_day = 1, 0, random.choice([0,1]), None, 0, 1
                 elif state < 0.80:
                     last_sent = (now - timedelta(days=random.randint(0, 4))).isoformat()
-                    current_day = random.choice([1, 3])
-                    next_day = 3 if current_day == 1 else 7
+                    current_day = random.choice([1, 4])
+                    next_day = 4 if current_day == 1 else 12
                     ready, unsub, verified = 1, 0, random.choice([0,1])
                 elif state < 0.90:
                     ready, unsub, verified = 0, 1, 0
@@ -191,7 +198,7 @@ def main():
                 row,
             ))
             day = contact["current_sequence_day"] or 0
-            for d in [1, 3, 7]:
+            for d in [1, 4, 12]:
                 if d > day:
                     break
                 try:

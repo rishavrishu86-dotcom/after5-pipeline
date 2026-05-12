@@ -61,17 +61,21 @@ def guess_icp(text: str, fallback: str | None = None) -> str | None:
         return fallback
     t = text.lower()
     rules = [
-        ("fintech",       ["fintech", "bank", "lending", "payments", "crypto"]),
-        ("proptech",      ["property", "real estate", "estate agent", "letting"]),
-        ("d2c",           ["ecommerce", "e-commerce", "direct to consumer", "shopify", "d2c"]),
-        ("marketplace",   ["marketplace", "platform", "two-sided", "aggregator"]),
-        ("saas",          ["saas", "software", "platform-as-a-service"]),
-        ("healthtech",    ["health", "clinic", "telemedicine", "medtech"]),
-        ("foodtech",      ["food", "restaurant", "delivery", "kitchen", "cloud kitchen"]),
-        ("insurtech",     ["insurance", "insurtech", "underwriting"]),
-        ("agency",        ["agency", "marketing agency", "digital agency"]),
-        ("hospitality",   ["hotel", "hospitality", "resort"]),
-        ("travel",        ["travel", "booking", "tourism"]),
+        ("real_estate",            ["estate agent", "real estate", "letting", "rightmove",
+                                     "zoopla", "property agency"]),
+        ("mortgage_broker",        ["mortgage broker", "mortgage advisor", "remortgage",
+                                     "mortgage advice"]),
+        ("car_dealer",             ["car dealer", "car dealership", "used cars", "new cars",
+                                     "autotrader", "approved used", "vehicle dealership"]),
+        ("solar_home_improvement", ["solar", "double glazing", "home improvement",
+                                     "windows", "boiler", "insulation", "kitchens",
+                                     "bathroom fitter"]),
+        ("car_finance",            ["car finance", "auto finance", "vehicle finance",
+                                     "car loan", "motor finance"]),
+        ("recruitment_agency",     ["recruitment", "recruiter", "staffing", "talent agency",
+                                     "executive search"]),
+        ("gym_fitness",            ["gym", "fitness", "boutique fitness",
+                                     "personal training", "studio"]),
     ]
     for label, kws in rules:
         if any(k in t for k in kws):

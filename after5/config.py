@@ -32,4 +32,5 @@ IMAP_PORT = int(_get("IMAP_PORT", "993"))
 APP_PASSWORD = _get("APP_PASSWORD", "change-me")
 
 DAILY_SEND_CAP = int(_get("DAILY_SEND_CAP", "80"))
-SEQUENCE_DAYS = [1, 3, 7]
+# Brief §4: main sequence + long-tail nurture
+SEQUENCE_DAYS = [1, 4, 12, 30, 60, 90]

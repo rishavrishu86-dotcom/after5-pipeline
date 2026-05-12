@@ -7,8 +7,9 @@ against existing companies), and inserts new rows with status='new'.
 from . import db, sources
 
 DEFAULT_QUERIES = {
-    "UK":  ["fintech", "proptech", "d2c", "marketplace", "saas",
-            "agency", "insurtech", "foodtech"],
+    "UK":  ["estate agent", "mortgage broker", "car dealership",
+            "solar installer", "car finance", "recruitment agency",
+            "boutique gym"],
 }
 
 DEFAULT_SOURCES = {

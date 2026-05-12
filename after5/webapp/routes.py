@@ -234,7 +234,7 @@ def register(app: Flask, login_required) -> None:
         day_filter = request.args.get("day", "")
         params: list = []
         clause = "c.ready_to_send=1 AND c.unsubscribed=0 AND c.email IS NOT NULL"
-        if day_filter in ("1", "3", "7"):
+        if day_filter in ("1", "4", "12", "30", "60", "90"):
             clause += " AND c.next_send_day=?"
             params.append(int(day_filter))
         rows = db.fetchall(
