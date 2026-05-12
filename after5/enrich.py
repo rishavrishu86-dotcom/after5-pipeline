@@ -4,10 +4,12 @@ import json
 from . import db, scrapers
 
 SCORE_COLUMNS = {
-    "tech": "tech_score",
-    "ads": "ads_score",
-    "hiring": "hiring_score",
-    "reviews": "reviews_score",
+    "tech":      "tech_score",
+    "seo":       "seo_score",
+    "reviews":   "reviews_score",
+    "ads":       "ads_score",
+    "hiring":    "hiring_score",
+    "sentiment": "sentiment_score",
 }
 
 

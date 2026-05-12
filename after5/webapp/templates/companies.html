@@ -43,8 +43,9 @@
   <table>
     <thead>
       <tr>
-        <th>Company</th><th>Country</th><th>Status</th><th>Priority</th>
-        <th>Tech</th><th>Ads</th><th>Hire</th><th>Revw</th><th>Total</th>
+        <th>Company</th><th>Status</th><th>Priority</th>
+        <th>Tech</th><th>SEO</th><th>Revw</th><th>Ads</th><th>Hire</th><th>Sent.</th>
+        <th>Total</th>
       </tr>
     </thead>
     <tbody>
@@ -53,21 +54,22 @@
         <td>
           <div class="stack">
             <a href="{{ url_for('company_detail', cid=r.id) }}"><b>{{ r.name or r.domain }}</b></a>
-            <small>{{ r.domain }} · {{ r.icp or '—' }}</small>
+            <small>{{ r.domain }} · {{ (r.icp or '').replace('_', ' ') or '—' }}</small>
           </div>
         </td>
-        <td>{{ r.country }}</td>
         <td><span class="tag {{ r.status }}">{{ r.status }}</span></td>
         <td>{% if r.priority %}<span class="tag {{ r.priority }}">{{ r.priority }}</span>{% else %}<small class="muted">—</small>{% endif %}</td>
         <td>{{ r.tech_score }}</td>
+        <td>{{ r.seo_score }}</td>
+        <td>{{ r.reviews_score }}</td>
         <td>{{ r.ads_score }}</td>
         <td>{{ r.hiring_score }}</td>
-        <td>{{ r.reviews_score }}</td>
+        <td>{{ r.sentiment_score }}</td>
         <td>{{ score_bar(r.total_score, r.priority) }}</td>
       </tr>
       {% endfor %}
       {% if not rows %}
-        <tr><td colspan="9" class="empty">No companies match these filters.</td></tr>
+        <tr><td colspan="10" class="empty">No companies match these filters.</td></tr>
       {% endif %}
     </tbody>
   </table>

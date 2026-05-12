@@ -82,12 +82,17 @@
     <div class="card">
       <div class="card-head"><h2>Signal scores</h2></div>
       <table>
-        <tr><th>tech</th><td>{{ company.tech_score }}</td></tr>
-        <tr><th>ads</th><td>{{ company.ads_score }}</td></tr>
-        <tr><th>hiring</th><td>{{ company.hiring_score }}</td></tr>
-        <tr><th>reviews</th><td>{{ company.reviews_score }}</td></tr>
-        <tr><th>sentiment</th><td>{{ company.sentiment_score }}</td></tr>
+        <tr><th>tech</th>      <td>{{ company.tech_score }}      {% if company.tech_score >= 3 %}<span class="verified">✓</span>{% endif %}</td></tr>
+        <tr><th>seo</th>       <td>{{ company.seo_score }}       {% if company.seo_score >= 3 %}<span class="verified">✓</span>{% endif %}</td></tr>
+        <tr><th>reviews</th>   <td>{{ company.reviews_score }}   {% if company.reviews_score >= 3 %}<span class="verified">✓</span>{% endif %}</td></tr>
+        <tr><th>ads</th>       <td>{{ company.ads_score }}       {% if company.ads_score >= 3 %}<span class="verified">✓</span>{% endif %}</td></tr>
+        <tr><th>hiring</th>    <td>{{ company.hiring_score }}    {% if company.hiring_score >= 3 %}<span class="verified">✓</span>{% endif %}</td></tr>
+        <tr><th>sentiment</th> <td>{{ company.sentiment_score }} {% if company.sentiment_score >= 3 %}<span class="verified">✓</span>{% endif %}</td></tr>
       </table>
+      <p class="hint">Binary qualification (brief §5): {{ [
+        company.tech_score, company.seo_score, company.reviews_score,
+        company.ads_score, company.hiring_score, company.sentiment_score
+      ] | select('ge', 3) | list | length }}/6 signals passed.</p>
     </div>
     {% if company.signals %}
     <div class="card">

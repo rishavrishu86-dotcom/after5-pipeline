@@ -62,29 +62,36 @@ ROLES = ["Head of Growth", "VP Sales", "Marketing Director", "CMO", "Growth Lead
          "Director of Customer Success", "Head of Digital", "Sales Director",
          "Commercial Lead", "Head of B2B", "Operations Director"]
 
-SIGNAL_TYPES = ["ads", "hiring", "reviews", "tech"]
+SIGNAL_TYPES = ["ads", "hiring", "reviews", "tech", "seo", "sentiment"]
+ROLE_LABELS = ["Founder / CEO", "Head of Sales", "Head of Marketing"]
 
 
 def _signals(scores: dict) -> str:
     evidence = {
-        "tech": {"score": scores["tech"], "type": "tech",
-                 "evidence": {"detected": random.choice([["Shopify"], ["WordPress","Intercom"], ["HubSpot"], []])}},
-        "ads": {"score": scores["ads"], "type": "ads",
-                "evidence": {"meta_active": random.randint(0, 18), "google_transparency": True}},
-        "hiring": {"score": scores["hiring"], "type": "hiring",
-                   "evidence": {"page": "/careers",
-                                "roles": random.sample(["sdr", "bdr", "customer success", "account executive"],
-                                                       k=random.randint(0, 3))}},
-        "reviews": {"score": scores["reviews"], "type": "reviews",
-                    "evidence": {"count": random.randint(50, 5000),
-                                 "rating": round(random.uniform(2.8, 4.9), 1)}},
+        "tech":      {"score": scores["tech"], "type": "tech",
+                      "evidence": {"detected": random.choice([["WordPress","Intercom"], ["HubSpot"], ["Shopify"], []])}},
+        "seo":       {"score": scores["seo"], "type": "seo",
+                      "evidence": {"indexed_pages_sampled": random.randint(0, 20)}},
+        "reviews":   {"score": scores["reviews"], "type": "reviews",
+                      "evidence": {"count": random.randint(50, 5000),
+                                   "rating": round(random.uniform(2.8, 4.9), 1)}},
+        "ads":       {"score": scores["ads"], "type": "ads",
+                      "evidence": {"meta_active": random.randint(0, 18), "google_transparency": True}},
+        "hiring":    {"score": scores["hiring"], "type": "hiring",
+                      "evidence": {"page": "/careers",
+                                   "roles": random.sample(["sdr", "bdr", "customer success", "account executive"],
+                                                          k=random.randint(0, 3))}},
+        "sentiment": {"score": scores["sentiment"], "type": "sentiment",
+                      "evidence": {"reviews_scanned": random.randint(0, 8),
+                                   "negative": random.randint(0, 3),
+                                   "slow_complaints": random.randint(0, 2)}},
     }
     return json.dumps(evidence)
 
 
-def _priority(total: int) -> str:
-    if total >= 18: return "hot"
-    if total >= 10: return "warm"
+def _priority_from_binary(binary: int) -> str:
+    if binary >= 5: return "hot"
+    if binary >= 3: return "warm"
     return "cold"
 
 
@@ -101,34 +108,41 @@ def main():
             # status mix: ~10% new, ~15% enriched, ~55% qualified, ~20% rejected
             roll = random.random()
             if roll < 0.10:
-                status, scores = "new", {"tech": 0, "ads": 0, "hiring": 0, "reviews": 0}
+                status = "new"
+                scores = {k: 0 for k in SIGNAL_TYPES}
             elif roll < 0.25:
                 status = "enriched"
                 scores = {k: random.randint(0, 5) for k in SIGNAL_TYPES}
             elif roll < 0.80:
                 status = "qualified"
+                # qualified rows must hit binary >= 3/6 (each ≥ 3 counts as 1)
                 scores = {
-                    "tech": random.randint(2, 8),
-                    "ads": random.randint(3, 9),
-                    "hiring": random.randint(2, 8),
-                    "reviews": random.randint(2, 7),
+                    "tech":      random.randint(2, 8),
+                    "seo":       random.randint(3, 9),
+                    "reviews":   random.randint(2, 7),
+                    "ads":       random.randint(3, 9),
+                    "hiring":    random.randint(2, 8),
+                    "sentiment": random.randint(0, 6),
                 }
             else:
                 status = "rejected"
                 scores = {k: random.randint(0, 3) for k in SIGNAL_TYPES}
             total = sum(scores.values())
-            prio = _priority(total) if status in ("qualified", "rejected") else None
+            binary = sum(1 for v in scores.values() if v >= 3)
+            prio = _priority_from_binary(binary) if status in ("qualified", "rejected") else None
             c.execute(
                 """
                 INSERT INTO companies (domain, name, country, icp, source, status,
-                    tech_score, ads_score, hiring_score, reviews_score,
+                    tech_score, seo_score, reviews_score, ads_score,
+                    hiring_score, sentiment_score,
                     total_score, priority, signals,
                     created_at, updated_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     domain, name, "UK", icp, "demo", status,
-                    scores["tech"], scores["ads"], scores["hiring"], scores["reviews"],
+                    scores["tech"], scores["seo"], scores["reviews"],
+                    scores["ads"], scores["hiring"], scores["sentiment"],
                     total, prio, _signals(scores) if status != "new" else None,
                     (now - timedelta(days=random.randint(2, 30))).isoformat(),
                     (now - timedelta(hours=random.randint(1, 72))).isoformat(),
@@ -139,9 +153,9 @@ def main():
         for cid, domain in c.execute(
             "SELECT id, domain FROM companies WHERE status='qualified'"
         ).fetchall():
-            for _ in range(random.randint(1, 3)):
+            # Brief §7 — 3 contacts per company, one per role bucket.
+            for role in ROLE_LABELS:
                 f, l = random.choice(FIRST_NAMES), random.choice(LAST_NAMES)
-                role = random.choice(ROLES)
                 email = f"{f.lower()}.{l.lower()}@{domain}"
                 state = random.random()
                 if state < 0.50:
