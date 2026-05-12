@@ -8,7 +8,7 @@ import random
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from after5 import db
+from after5 import db, send
 
 random.seed(7)
 
@@ -171,23 +171,43 @@ def main():
                 )
                 contact_ids.append(cur.lastrowid)
 
-        for cid, day in c.execute(
-            "SELECT id, current_sequence_day FROM contacts WHERE last_sent_at IS NOT NULL"
-        ).fetchall():
+        # For each contact that has been "sent" in demo state, render the real
+        # template chain for each day they completed, so /sent shows what the
+        # actual outgoing email looked like (not a placeholder).
+        sent_rows = c.execute(
+            """
+            SELECT c.id, c.current_sequence_day, c.first_name, c.last_name, c.email,
+                   c.role, c.ai_first_line, c.signal_used,
+                   co.name AS company_name, co.domain, co.country, co.icp
+            FROM contacts c JOIN companies co ON co.id = c.company_id
+            WHERE c.last_sent_at IS NOT NULL
+            """
+        ).fetchall()
+        for row in sent_rows:
+            contact = dict(zip(
+                ("id", "current_sequence_day", "first_name", "last_name", "email",
+                 "role", "ai_first_line", "signal_used",
+                 "company_name", "domain", "country", "icp"),
+                row,
+            ))
+            day = contact["current_sequence_day"] or 0
             for d in [1, 3, 7]:
-                if d > (day or 0):
+                if d > day:
                     break
+                try:
+                    subject, body = send.render_for_contact(contact, day=d)
+                except Exception as e:
+                    subject = f"[render error: {e}]"
+                    body = ""
                 c.execute(
                     """
                     INSERT INTO sends (contact_id, sequence_day, subject, body, sent_at, message_id)
                     VALUES (?, ?, ?, ?, ?, ?)
                     """,
-                    (cid, d,
-                     f"Quick idea for your team — day {d}",
-                     "Hi there,\n\n[rendered template body]\n\nLouis",
+                    (contact["id"], d, subject, body,
                      (now - timedelta(days=random.randint(0, 6),
                                       hours=random.randint(0, 23))).isoformat(),
-                     f"<demo-{cid}-{d}@after5.demo>"),
+                     f"<demo-{contact['id']}-{d}@after5.demo>"),
                 )
 
         random.shuffle(contact_ids)
