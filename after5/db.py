@@ -20,9 +20,14 @@ def init():
 
 def _migrate(con) -> None:
     """Idempotent column-add migrations. Safe on every init() call."""
-    cols = {r[1] for r in con.execute("PRAGMA table_info(replies)").fetchall()}
-    if "slack_pinged_at" not in cols:
+    reply_cols = {r[1] for r in con.execute("PRAGMA table_info(replies)").fetchall()}
+    if "slack_pinged_at" not in reply_cols:
         con.execute("ALTER TABLE replies ADD COLUMN slack_pinged_at TIMESTAMP")
+    company_cols = {r[1] for r in con.execute("PRAGMA table_info(companies)").fetchall()}
+    if "campaign" not in company_cols:
+        con.execute(
+            "ALTER TABLE companies ADD COLUMN campaign TEXT DEFAULT 'icp_outreach'"
+        )
 
 
 @contextmanager

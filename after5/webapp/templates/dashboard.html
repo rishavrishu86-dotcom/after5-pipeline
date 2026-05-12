@@ -72,6 +72,21 @@
   </div>
 </section>
 
+{% if campaigns %}
+<section class="panel" style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px">
+  <div class="card-head"><h2>Pipeline by Campaign (brief §3)</h2></div>
+  <div class="kpis" style="grid-template-columns:repeat({{ campaigns|length }},1fr);margin-bottom:0">
+    {% for c in campaigns %}
+    <div class="kpi">
+      <div class="icon icon-{{ c.icon }}"><i data-lucide="{{ c.lucide }}"></i></div>
+      <h3>{{ c.count }}</h3>
+      <p>{{ c.label }}<br><span class="sub">{{ c.qualified }} qualified</span></p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
 <section class="grid-main">
   <div>
     <div class="card">

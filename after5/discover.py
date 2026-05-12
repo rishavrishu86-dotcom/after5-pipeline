@@ -13,7 +13,8 @@ DEFAULT_QUERIES = {
 }
 
 DEFAULT_SOURCES = {
-    "UK":  ["web_search", "indeed_uk"],
+    # All three campaigns fire by default — each source self-tags its campaign.
+    "UK":  ["web_search", "hiring_signal", "clutch_agency"],
 }
 
 
@@ -55,10 +56,11 @@ def run(country: str | None = None,
                         cur = conn.execute(
                             """
                             INSERT OR IGNORE INTO companies
-                            (domain, name, country, icp, source, status)
-                            VALUES (?, ?, ?, ?, ?, 'new')
+                            (domain, name, country, icp, source, campaign, status)
+                            VALUES (?, ?, ?, ?, ?, ?, 'new')
                             """,
-                            (d, r.get("name"), r["country"], r.get("icp"), r.get("source")),
+                            (d, r.get("name"), r["country"], r.get("icp"),
+                             r.get("source"), r.get("campaign", "icp_outreach")),
                         )
                         if cur.rowcount:
                             inserted_total += 1

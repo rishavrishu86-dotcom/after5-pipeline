@@ -37,6 +37,16 @@
       <option value="{{ p }}" {% if priority==p %}selected{% endif %}>{{ p }}</option>
       {% endfor %}
     </select>
+    <select name="campaign">
+      <option value="">All campaigns</option>
+      {% for cmp, label in [
+          ('icp_outreach', 'Campaign 1 — ICP outreach'),
+          ('hiring_signal', 'Campaign 2 — Hiring signal'),
+          ('agency_partnership', 'Campaign 3 — Agency partnership'),
+      ] %}
+      <option value="{{ cmp }}" {% if campaign==cmp %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
     <button class="btn"><i data-lucide="filter"></i> Filter</button>
   </form>
 

@@ -52,6 +52,23 @@ UK_COS = [
     ("thirdspace.london", "Third Space", "gym_fitness"),
 ]
 
+# Campaign 2 — Hiring Signal: discovered via "UK head of sales hiring" queries.
+HIRING_COS = [
+    ("nimblefins.co.uk", "NimbleFins", "insurtech"),
+    ("currensea.com", "Currensea", "fintech"),
+    ("paddleboat.co.uk", "Paddleboat", "marketing_agency"),
+    ("growthsq.com", "Growth Squared", "marketing_agency"),
+    ("primer.io", "Primer", "fintech"),
+]
+
+# Campaign 3 — Agency Partnership: UK marketing agencies for referral flywheel.
+AGENCY_COS = [
+    ("brainlabsdigital.com", "Brainlabs", "marketing_agency"),
+    ("croud.com", "Croud", "marketing_agency"),
+    ("imagination.com", "Imagination", "marketing_agency"),
+    ("forwards.co.uk", "Forwards", "marketing_agency"),
+]
+
 FIRST_NAMES = ["Jordan", "Priya", "Tom", "Anna", "Sam", "Olivia", "Liam", "Sophie",
                "Adam", "Hannah", "Ben", "Maya", "Connor", "Ella", "Dylan",
                "Holly", "James", "Emily", "Oliver", "Charlotte"]
@@ -103,8 +120,13 @@ def main():
     db.init()
 
     now = datetime.utcnow()
+    rows_by_campaign = (
+        [(d, n, i, "icp_outreach") for d, n, i in UK_COS]
+        + [(d, n, i, "hiring_signal") for d, n, i in HIRING_COS]
+        + [(d, n, i, "agency_partnership") for d, n, i in AGENCY_COS]
+    )
     with db.conn() as c:
-        for domain, name, icp in UK_COS:
+        for domain, name, icp, campaign in rows_by_campaign:
             # status mix: ~10% new, ~15% enriched, ~55% qualified, ~20% rejected
             roll = random.random()
             if roll < 0.10:
@@ -132,15 +154,15 @@ def main():
             prio = _priority_from_binary(binary) if status in ("qualified", "rejected") else None
             c.execute(
                 """
-                INSERT INTO companies (domain, name, country, icp, source, status,
+                INSERT INTO companies (domain, name, country, icp, source, campaign, status,
                     tech_score, seo_score, reviews_score, ads_score,
                     hiring_score, sentiment_score,
                     total_score, priority, signals,
                     created_at, updated_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
-                    domain, name, "UK", icp, "demo", status,
+                    domain, name, "UK", icp, "demo", campaign, status,
                     scores["tech"], scores["seo"], scores["reviews"],
                     scores["ads"], scores["hiring"], scores["sentiment"],
                     total, prio, _signals(scores) if status != "new" else None,
@@ -258,8 +280,30 @@ def main():
         c.execute(
             "INSERT OR IGNORE INTO suppression (email, domain, reason) "
             "VALUES (?, ?, 'hard-bounce')",
-            ("nonexistent@deliveroo.co.uk", "deliveroo.co.uk")
+            ("nonexistent@chestertons.com", "chestertons.com")
         )
+
+        # Sample touches — brief §4 multi-channel sequence is tracked here.
+        touched_contacts = c.execute(
+            "SELECT id FROM contacts WHERE last_sent_at IS NOT NULL LIMIT 8"
+        ).fetchall()
+        sample_touches = [
+            ("linkedin_invite", 2, "accepted", "Connection accepted same day."),
+            ("linkedin_invite", 2, "logged",   "Invite sent."),
+            ("linkedin_voice",  5, "logged",   "30s voice note — softer angle."),
+            ("cold_call",       7, "no_answer", "Voicemail left referencing day-1 email."),
+            ("cold_call",       7, "answered", "Brief chat — asked to follow up by email."),
+            ("loom",            8, "logged",   "Tailored Loom built around their site."),
+            ("cold_call",      14, "no_answer", "Second attempt; left no message."),
+            ("linkedin_voice",  6, "logged",   "Voice note — referenced day-4 follow-up."),
+        ]
+        for (cid_row,), (kind, day, status_, notes) in zip(touched_contacts, sample_touches):
+            c.execute(
+                "INSERT INTO touches (contact_id, kind, day, status, notes, created_at) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (cid_row, kind, day, status_, notes,
+                 (now - timedelta(days=random.randint(0, 6))).isoformat()),
+            )
 
     counts = {
         "companies": db.fetchone("SELECT COUNT(*) AS n FROM companies")["n"],

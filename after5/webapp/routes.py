@@ -94,9 +94,29 @@ def register(app: Flask, login_required) -> None:
     @app.route("/")
     @login_required
     def dashboard():
+        camp_rows = db.fetchall(
+            """
+            SELECT campaign,
+                   COUNT(*) AS count,
+                   SUM(CASE WHEN status='qualified' THEN 1 ELSE 0 END) AS qualified
+            FROM companies
+            WHERE campaign IS NOT NULL
+            GROUP BY campaign
+            """
+        )
+        camp_meta = {
+            "icp_outreach":       {"label": "Campaign 1 — ICP",          "icon": "violet", "lucide": "target"},
+            "hiring_signal":      {"label": "Campaign 2 — Hiring",       "icon": "amber",  "lucide": "briefcase"},
+            "agency_partnership": {"label": "Campaign 3 — Agency",       "icon": "green",  "lucide": "handshake"},
+        }
+        campaigns = []
+        for r in camp_rows:
+            meta = camp_meta.get(r["campaign"], {"label": r["campaign"], "icon": "blue", "lucide": "circle"})
+            campaigns.append({**meta, "count": r["count"], "qualified": r["qualified"] or 0})
         return render_template(
             "dashboard.html",
             kpis=_kpis(),
+            campaigns=campaigns,
             recent_leads=_recent_leads(),
             top_sources=_top_sources(),
             activity=_activity(),
@@ -111,6 +131,7 @@ def register(app: Flask, login_required) -> None:
         country = request.args.get("country") or ""
         status = request.args.get("status") or ""
         priority = request.args.get("priority") or ""
+        campaign = request.args.get("campaign") or ""
         where = ["1=1"]
         params: list = []
         if q:
@@ -125,6 +146,9 @@ def register(app: Flask, login_required) -> None:
         if priority:
             where.append("priority=?")
             params.append(priority)
+        if campaign:
+            where.append("campaign=?")
+            params.append(campaign)
         rows = db.fetchall(
             f"SELECT * FROM companies WHERE {' AND '.join(where)} "
             "ORDER BY total_score DESC, id DESC LIMIT 300",
@@ -132,7 +156,8 @@ def register(app: Flask, login_required) -> None:
         )
         return render_template(
             "companies.html",
-            rows=rows, q=q, country=country, status=status, priority=priority,
+            rows=rows, q=q, country=country, status=status,
+            priority=priority, campaign=campaign,
         )
 
     @app.route("/companies/<int:cid>")
@@ -152,10 +177,48 @@ def register(app: Flask, login_required) -> None:
             """,
             (cid,),
         )
+        touches_ = db.fetchall(
+            """
+            SELECT t.*, c.first_name, c.last_name, c.email
+            FROM touches t JOIN contacts c ON c.id = t.contact_id
+            WHERE c.company_id = ?
+            ORDER BY t.day ASC, t.created_at DESC
+            """,
+            (cid,),
+        )
         return render_template(
             "company_detail.html",
-            company=company, contacts=contacts_, sends=sends_,
+            company=company, contacts=contacts_, sends=sends_, touches=touches_,
         )
+
+    @app.post("/contacts/<int:cid>/touches")
+    @login_required
+    def add_touch(cid):
+        kind = request.form.get("kind", "other")
+        day_raw = request.form.get("day", "")
+        notes = request.form.get("notes", "").strip()
+        status_ = request.form.get("status", "logged")
+        try:
+            day = int(day_raw) if day_raw else None
+        except ValueError:
+            day = None
+        valid_kinds = {"linkedin_invite", "linkedin_voice", "cold_call", "loom", "other"}
+        if kind not in valid_kinds:
+            kind = "other"
+        with db.conn() as c:
+            row = c.execute(
+                "SELECT company_id FROM contacts WHERE id=?", (cid,)
+            ).fetchone()
+            if not row:
+                return ("not found", 404)
+            c.execute(
+                "INSERT INTO touches (contact_id, kind, day, status, notes) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (cid, kind, day, status_, notes or None),
+            )
+            company_id = row["company_id"]
+        flash(f"logged {kind}", "ok")
+        return redirect(request.referrer or url_for("company_detail", cid=company_id))
 
     @app.route("/contacts")
     @login_required

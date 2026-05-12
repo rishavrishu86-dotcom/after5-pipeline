@@ -15,6 +15,8 @@
       <span class="dot">·</span>
       <span class="tag {{ company.status }}">{{ company.status }}</span>
       {% if company.priority %}<span class="tag {{ company.priority }}">{{ company.priority }}</span>{% endif %}
+      <span class="dot">·</span>
+      <span><code>{{ (company.campaign or 'icp_outreach').replace('_', ' ') }}</code></span>
     </div>
   </div>
   <div>
@@ -57,6 +59,57 @@
           {% endif %}
         </tbody>
       </table>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Manual touches ({{ touches|length }})</h2></div>
+      <p class="hint">Brief §4 — LinkedIn invites, voice notes, cold calls, Looms. Not automated; logged here so the day-7 / day-14 / Loom touchpoints don't get missed.</p>
+      <table>
+        <thead><tr><th>Day</th><th>Kind</th><th>Status</th><th>Contact</th><th>Notes</th><th>When</th></tr></thead>
+        <tbody>
+          {% for t in touches %}
+          <tr>
+            <td><span class="day-pill">D{{ t.day or '?' }}</span></td>
+            <td><code>{{ t.kind }}</code></td>
+            <td><span class="tag {{ t.status }}">{{ t.status }}</span></td>
+            <td><small>{{ t.first_name or '' }} {{ t.last_name or '' }}</small></td>
+            <td><small>{{ t.notes or '' }}</small></td>
+            <td><small>{{ t.created_at }}</small></td>
+          </tr>
+          {% endfor %}
+          {% if not touches %}<tr><td colspan="6" class="empty">No manual touches logged yet.</td></tr>{% endif %}
+        </tbody>
+      </table>
+      <details style="margin-top:14px">
+        <summary style="cursor:pointer;color:var(--primary-2)">+ Log a new touch</summary>
+        <div style="margin-top:12px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
+          {% for c in contacts %}
+          <form method="post" action="{{ url_for('add_touch', cid=c.id) }}"
+                style="background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:12px">
+            <div style="margin-bottom:8px"><b>{{ c.first_name or '' }} {{ c.last_name or '' }}</b><br><small>{{ c.email }}</small></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+              <select name="kind" class="input" style="flex:1;min-width:120px">
+                <option value="linkedin_invite">LinkedIn invite</option>
+                <option value="linkedin_voice">LinkedIn voice</option>
+                <option value="cold_call">Cold call</option>
+                <option value="loom">Loom</option>
+                <option value="other">Other</option>
+              </select>
+              <input name="day" type="number" placeholder="day" class="input" style="width:70px">
+              <select name="status" class="input">
+                <option value="logged">logged</option>
+                <option value="answered">answered</option>
+                <option value="no_answer">no answer</option>
+                <option value="accepted">accepted</option>
+                <option value="declined">declined</option>
+              </select>
+            </div>
+            <input name="notes" placeholder="Notes (optional)" class="input" style="width:100%;margin-bottom:8px">
+            <button class="btn btn-sm btn-indigo" style="width:100%"><i data-lucide="plus"></i> Log</button>
+          </form>
+          {% endfor %}
+        </div>
+      </details>
     </div>
 
     <div class="card">

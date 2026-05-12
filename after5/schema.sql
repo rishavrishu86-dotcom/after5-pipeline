@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS companies (
   country         TEXT CHECK(country IN ('UK','UAE')) NOT NULL,
   icp             TEXT,
   source          TEXT,
+  campaign        TEXT DEFAULT 'icp_outreach',
   status          TEXT DEFAULT 'new',
   tech_score      INTEGER DEFAULT 0,
   seo_score       INTEGER DEFAULT 0,
@@ -83,3 +84,15 @@ CREATE TABLE IF NOT EXISTS suppression (
   reason      TEXT,
   created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Manual non-email touches per the brief §4 sequence (LinkedIn, calls, Loom).
+CREATE TABLE IF NOT EXISTS touches (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  contact_id  INTEGER NOT NULL REFERENCES contacts(id),
+  kind        TEXT NOT NULL,        -- linkedin_invite | linkedin_voice | cold_call | loom | other
+  day         INTEGER,              -- sequence day from brief (e.g. 2, 5, 7, 14)
+  status      TEXT DEFAULT 'logged',-- logged | answered | no_answer | accepted | declined
+  notes       TEXT,
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_touches_contact ON touches(contact_id);
