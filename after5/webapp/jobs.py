@@ -22,7 +22,25 @@ from .. import (
 _JOBS: dict[str, dict] = {}
 _LOCK = threading.Lock()
 
+def _pipeline_intake() -> dict:
+    """Chained intake — what the dashboard's primary button fires.
+
+    Runs the full top-of-funnel chain so the click is always useful, even if
+    one stage has nothing to do. Returns a single summary dict.
+    """
+    d = discover.run(limit_per_source=10)
+    e = enrich.run(limit=50)
+    q = qualify.run()
+    return {
+        "discovered_new": d.get("inserted", 0),
+        "skipped_duplicates": d.get("skipped_dupe", 0),
+        "enriched": e,
+        "qualified": q,
+    }
+
+
 JOB_FACTORIES: dict[str, Callable[..., dict | int]] = {
+    "pipeline-intake": _pipeline_intake,
     "discover": lambda: discover.run(limit_per_source=15),
     "enrich": lambda: enrich.run(limit=50),
     "qualify": qualify.run,

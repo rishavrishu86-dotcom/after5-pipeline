@@ -23,9 +23,11 @@
   </div>
   <div class="page-actions">
     <button class="btn btn-primary"
-            hx-post="{{ url_for('start_job', name='enrich') }}"
-            hx-target="#jobs-tbody" hx-swap="afterbegin">
-      <i data-lucide="radar"></i> Run Enrich
+            hx-post="{{ url_for('start_job', name='pipeline-intake') }}"
+            hx-target="#jobs-tbody" hx-swap="afterbegin"
+            onclick="setTimeout(() => document.getElementById('jobs-card').scrollIntoView({behavior:'smooth',block:'start'}), 250);"
+            title="Discover new prospects → enrich them with live signals → qualify into hot/warm/cold">
+      <i data-lucide="zap"></i> Run Pipeline
     </button>
     <a class="btn" href="{{ url_for('automation') }}">
       <i data-lucide="bot"></i> Automation
@@ -138,6 +140,7 @@
     <div class="card" id="jobs-card">
       <div class="card-head">
         <h2>Run a pipeline job</h2>
+        <small class="muted">click any stage — runs in the background, status updates live</small>
       </div>
       <div class="jobs-bar">
         {% for name in job_names %}
